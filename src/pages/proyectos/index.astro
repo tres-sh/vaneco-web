@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../../components/ui/Navbar";
+import { FloatingBottomNav } from "../../components/ui/FloatingBottomNav";
+import { ProjectGallery } from "../../components/projects/ProjectGallery";
+import { Footer } from "../../components/ui/Footer";
+---
+
+<BaseLayout
+  title="Proyectos — Vaneco"
+  description="Galería de cocinas, islas, barras y baños en piedra natural. Filtra por material, color y acabado. Vaneco · Tijuana, B.C."
+  lang="es"
+>
+  <Navbar currentPath="/proyectos" client:load />
+  <MobileTopBar client:load />
+  <main>
+    <ProjectGallery client:load />
+    <Footer client:load />
+  </main>
+  <FloatingBottomNav currentPath="/proyectos" client:load />
+</BaseLayout>

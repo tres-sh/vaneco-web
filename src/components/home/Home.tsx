@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
-import { ArrowUpRight, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useLang } from "../../lib/useLang";
 import { StonePlaceholder } from "./StonePlaceholder";
+import { PrimaryBtn, SecondaryBtn } from "../ui/Button";
+import { Footer } from "../ui/Footer";
 
 // =====================
 // COPY (ES / EN)
@@ -146,62 +147,6 @@ const copy = {
     },
   },
 } as const;
-
-// =====================
-// BUTTONS — radius 10, color inversion on hover, scale on press
-// =====================
-function PrimaryBtn({
-  href,
-  children,
-  full = false,
-}: {
-  href: string;
-  children: ReactNode;
-  full?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={[
-        full ? "w-full" : "",
-        "inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
-        "text-[15px] font-medium tracking-wide",
-        "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
-        "transition-all duration-200 active:scale-[0.96]",
-        "hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]",
-      ].join(" ")}
-    >
-      {children}
-      <ArrowUpRight size={16} />
-    </a>
-  );
-}
-
-function SecondaryBtn({
-  href,
-  children,
-  full = false,
-}: {
-  href: string;
-  children: ReactNode;
-  full?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      className={[
-        full ? "w-full" : "",
-        "inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
-        "text-[15px] font-medium tracking-wide",
-        "border border-[var(--border-default)] text-[var(--text-primary)]",
-        "transition-all duration-200 active:scale-[0.96]",
-        "hover:bg-[var(--invert-bg)] hover:text-[var(--invert-fg)] hover:border-transparent",
-      ].join(" ")}
-    >
-      {children}
-    </a>
-  );
-}
 
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 
@@ -424,34 +369,7 @@ export function Home() {
       </section>
 
       {/* ============ FOOTER ============ */}
-      <footer id="contacto" className="border-t border-[var(--border-default)]">
-        <div
-          className={`${SHELL} py-8 md:py-6 pb-32 md:pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4`}
-        >
-          <a
-            href="/"
-            className="font-franchise text-[20px] leading-none tracking-wide text-[var(--text-primary)]"
-          >
-            vaneco
-          </a>
-          <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-4 text-[13px] text-[var(--text-muted)]">
-            <a
-              href="mailto:contacto@piedrasvaneco.com"
-              className="hover:text-[var(--text-secondary)] transition-colors"
-            >
-              contacto@piedrasvaneco.com
-            </a>
-            <a
-              href="tel:+526648081307"
-              className="hover:text-[var(--text-secondary)] transition-colors"
-            >
-              (664) 808 1307
-            </a>
-            <span>Tijuana, B.C.</span>
-          </div>
-          <div className="text-[13px] text-[var(--text-muted)]">{c.footer.rights}</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,0 +1,28 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../../components/ui/Navbar";
+import { FloatingBottomNav } from "../../components/ui/FloatingBottomNav";
+import { Footer } from "../../components/ui/Footer";
+import { ProjectDetail } from "../../components/projects/ProjectDetail";
+import { projects } from "../../data/projects";
+
+export function getStaticPaths() {
+  return projects.map((p) => ({ params: { id: p.id }, props: { project: p } }));
+}
+
+const { project } = Astro.props;
+---
+
+<BaseLayout
+  title={`${project.title} — Vaneco`}
+  description={project.description}
+  lang="es"
+>
+  <Navbar currentPath="/proyectos" client:load />
+  <MobileTopBar client:load />
+  <main>
+    <ProjectDetail project={project} client:load />
+    <Footer client:load />
+  </main>
+  <FloatingBottomNav currentPath="/proyectos" client:load />
+</BaseLayout>
