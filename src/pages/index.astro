@@ -1,18 +1,19 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { Navbar } from "../components/ui/Navbar";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
 import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Home } from "../components/home/Home";
 ---
 
-<BaseLayout title="Vaneco — Natural Stone Workshop">
+<BaseLayout
+  title="Vaneco — Cubiertas de piedra natural en Tijuana"
+  description="Diseñamos, fabricamos e instalamos cubiertas de piedra natural. De la visita a la instalación, sin intermediarios. Tijuana, B.C."
+  lang="es"
+>
   <Navbar currentPath="/" client:load />
-  <FloatingBottomNav currentPath="/" client:load />
-  <main class="pt-15">
-    <h1
-      class="font-franchise text-display p-8"
-      style="color: var(--text-primary)"
-    >
-      HELLO VANECO
-    </h1>
+  <MobileTopBar client:load />
+  <main>
+    <Home client:load />
   </main>
+  <FloatingBottomNav currentPath="/" client:load />
 </BaseLayout>

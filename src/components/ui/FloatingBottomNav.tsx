@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
-import { Home, LayoutGrid, Calendar, Info, Settings } from "lucide-react";
+import { Home, Image, CalendarDays, MessageCircle, Settings } from "lucide-react";
+import { useLang } from "../../lib/useLang";
 
-// =====================
-// TYPES
-// =====================
-type Lang = "es" | "en";
-
-type NavItem = {
+type Item = {
   key: string;
   href: string;
   icon: React.ReactNode;
@@ -18,175 +14,128 @@ interface FloatingBottomNavProps {
   currentPath?: string;
 }
 
-// =====================
-// NAV ITEMS
-// =====================
-const navItems: NavItem[] = [
+// Regular (non-CTA) items, in display order around the Agendar button.
+const leftItems: Item[] = [
   {
     key: "home",
     href: "/",
-    icon: <Home size={18} strokeWidth={1.5} />,
+    icon: <Home size={18} strokeWidth={2} />,
     labelEs: "Inicio",
     labelEn: "Home",
   },
   {
-    key: "work",
-    href: "/work",
-    icon: <LayoutGrid size={18} strokeWidth={1.5} />,
-    labelEs: "Trabajos",
-    labelEn: "Work",
-  },
-  {
-    key: "about",
-    href: "/about",
-    icon: <Info size={18} strokeWidth={1.5} />,
-    labelEs: "Nosotros",
-    labelEn: "About",
-  },
-  {
-    key: "settings",
-    href: "#settings",
-    icon: <Settings size={18} strokeWidth={1.5} />,
-    labelEs: "Más",
-    labelEn: "More",
+    key: "gallery",
+    href: "/proyectos",
+    icon: <Image size={18} strokeWidth={2} />,
+    labelEs: "Galería",
+    labelEn: "Gallery",
   },
 ];
 
-// =====================
-// COMPONENT
-// =====================
-export function FloatingBottomNav({
-  currentPath = "/",
-}: FloatingBottomNavProps) {
-  const [lang, setLang] = useState<Lang>("es");
-  const [active, setActive] = useState<string>("home");
+const rightItems: Item[] = [
+  {
+    key: "contact",
+    href: "#contacto",
+    icon: <MessageCircle size={18} strokeWidth={2} />,
+    labelEs: "Contacto",
+    labelEn: "Contact",
+  },
+  {
+    key: "settings",
+    href: "#ajustes",
+    icon: <Settings size={18} strokeWidth={2} />,
+    labelEs: "Ajustes",
+    labelEn: "Settings",
+  },
+];
 
-  // Read stored lang
+function pathToKey(path: string): string {
+  if (path === "/") return "home";
+  if (path.startsWith("/proyectos")) return "gallery";
+  return "home";
+}
+
+export function FloatingBottomNav({ currentPath = "/" }: FloatingBottomNavProps) {
+  const [lang] = useLang("es");
+  const [active, setActive] = useState<string>(() => pathToKey(currentPath));
+
   useEffect(() => {
-    const stored = localStorage.getItem("vaneco-lang") as Lang | null;
-    if (stored === "en" || stored === "es") setLang(stored);
-
-    // Listen for lang changes from Navbar
-    const onLang = (e: Event) => {
-      const { lang: l } = (e as CustomEvent).detail;
-      setLang(l);
-    };
-    window.addEventListener("vaneco:lang-change", onLang);
-    return () => window.removeEventListener("vaneco:lang-change", onLang);
-  }, []);
-
-  // Set active based on current path
-  useEffect(() => {
-    if (currentPath === "/") setActive("home");
-    else if (currentPath.startsWith("/work")) setActive("work");
-    else if (currentPath.startsWith("/about")) setActive("about");
+    setActive(pathToKey(currentPath));
   }, [currentPath]);
 
-  function handleClick(item: NavItem) {
-    if (item.key === "settings") return; // handled separately
-    setActive(item.key);
-  }
+  const bounce = "cubic-bezier(0.34, 1.2, 0.64, 1)";
+
+  const renderItem = (item: Item) => {
+    const isActive = active === item.key;
+    const label = lang === "es" ? item.labelEs : item.labelEn;
+    return (
+      <a
+        key={item.key}
+        href={item.href}
+        onClick={() => setActive(item.key)}
+        aria-label={label}
+        aria-current={isActive ? "page" : undefined}
+        className={[
+          "flex items-center rounded-[14px] cursor-pointer overflow-hidden",
+          "transition-all duration-300",
+          isActive ? "bg-[#2E2E2E] px-3.5 py-2.5 gap-1.5" : "p-2.5 hover:bg-white/5",
+        ].join(" ")}
+        style={{ transitionTimingFunction: bounce }}
+      >
+        <span
+          className={[
+            "flex-shrink-0 transition-colors duration-200",
+            isActive ? "text-white" : "text-[#9B9B9B]",
+          ].join(" ")}
+        >
+          {item.icon}
+        </span>
+        <span
+          className={[
+            "text-[13px] font-medium text-white whitespace-nowrap",
+            "transition-all duration-300 overflow-hidden",
+            isActive ? "max-w-[90px] opacity-100" : "max-w-0 opacity-0",
+          ].join(" ")}
+          style={{ transitionTimingFunction: bounce }}
+          aria-hidden={!isActive}
+        >
+          {label}
+        </span>
+      </a>
+    );
+  };
 
   return (
-    // Only visible on mobile — hidden on md+
-    <div className="fixed bottom-4 left-0 right-0 flex justify-center z-50 md:hidden px-4">
+    // Mobile only — hidden on md+
+    <div className="md:hidden fixed bottom-5 left-0 right-0 flex justify-center z-50 px-4 pointer-events-none">
       <nav
         role="navigation"
-        aria-label="Mobile navigation"
+        aria-label={lang === "es" ? "Navegación" : "Navigation"}
         className={[
-          "flex items-center gap-1",
-          "px-1.5 py-1.5",
-          "rounded-[18px]",
-          "border border-[var(--border-default)]",
-          "bg-black/88 backdrop-blur-xl",
+          "pointer-events-auto flex items-center gap-1",
+          "px-2 py-2 rounded-[18px]",
+          "border border-[#2E2E2E]",
+          "bg-[rgba(20,20,20,0.85)] backdrop-blur-[16px]",
           "shadow-float",
         ].join(" ")}
       >
-        {/* Regular nav items */}
-        {navItems.slice(0, 3).map((item) => {
-          const isActive = active === item.key;
-          const label = lang === "es" ? item.labelEs : item.labelEn;
+        {leftItems.map(renderItem)}
 
-          return (
-            <a
-              key={item.key}
-              href={item.href}
-              onClick={() => handleClick(item)}
-              aria-label={label}
-              aria-current={isActive ? "page" : undefined}
-              className={[
-                "flex items-center rounded-[12px] cursor-pointer",
-                "transition-all duration-300",
-                "overflow-hidden",
-                isActive
-                  ? "bg-[#F5F5F5] px-3 py-2 gap-1.5"
-                  : "p-2 hover:bg-veta/8",
-              ].join(" ")}
-              style={{
-                transitionTimingFunction: "cubic-bezier(0.34, 1.2, 0.64, 1)",
-              }}
-            >
-              {/* Icon */}
-              <span
-                className={[
-                  "flex-shrink-0 transition-colors duration-200",
-                  isActive ? "text-black" : "text-[#4A4A4A]",
-                ].join(" ")}
-              >
-                {item.icon}
-              </span>
-
-              {/* Label — only visible when active */}
-              <span
-                className={[
-                  "text-[12px] font-medium text-black whitespace-nowrap",
-                  "transition-all duration-300 overflow-hidden",
-                  isActive
-                    ? "max-w-[80px] opacity-100 ml-0"
-                    : "max-w-0 opacity-0",
-                ].join(" ")}
-                style={{
-                  transitionTimingFunction: "cubic-bezier(0.34, 1.2, 0.64, 1)",
-                }}
-                aria-hidden={!isActive}
-              >
-                {label}
-              </span>
-            </a>
-          );
-        })}
-
-        {/* Book CTA — always expanded with Veta accent */}
+        {/* Agendar — always highlighted, never competes with active */}
         <a
-          href="/book"
-          aria-label={lang === "es" ? "Agendar cita" : "Book a visit"}
+          href="/cita"
+          aria-label={lang === "es" ? "Agendar visita" : "Book a visit"}
           className={[
-            "flex items-center gap-1.5 px-3 py-2 rounded-[12px]",
-            "bg-veta/15 border border-veta/25",
-            "transition-all duration-200",
-            "hover:bg-veta/25",
+            "flex items-center justify-center rounded-[14px] p-2.5",
+            "bg-veta/12 transition-colors duration-200 hover:bg-veta/20",
           ].join(" ")}
         >
           <span className="text-veta flex-shrink-0">
-            <Calendar size={18} strokeWidth={1.5} />
-          </span>
-          <span className="text-[12px] font-medium text-veta whitespace-nowrap">
-            {lang === "es" ? "Cita" : "Book"}
+            <CalendarDays size={18} strokeWidth={2} />
           </span>
         </a>
 
-        {/* Settings */}
-        <button
-          onClick={() => handleClick(navItems[3])}
-          aria-label={lang === "es" ? "Más opciones" : "More options"}
-          className={[
-            "flex items-center rounded-[12px] cursor-pointer p-2",
-            "transition-all duration-200",
-            "text-[#4A4A4A] hover:bg-veta/8 hover:text-veta",
-          ].join(" ")}
-        >
-          <Settings size={18} strokeWidth={1.5} />
-        </button>
+        {rightItems.map(renderItem)}
       </nav>
     </div>
   );

@@ -3,6 +3,8 @@
    ===================== */
 @import url('https://api.fontshare.com/v2/css?f[]=chillax@300,400,500,600&display=swap');
 @import url('https://fonts.cdnfonts.com/css/franchise');
+/* Franchise fallback while it loads / if it fails */
+@import url('https://fonts.googleapis.com/css2?family=Anton&display=swap');
 
 /* =====================
    TAILWIND v4
@@ -14,7 +16,7 @@
    ===================== */
 @theme {
   /* Fonts */
-  --font-franchise: 'Franchise', 'Arial Black', sans-serif;
+  --font-franchise: 'Franchise', 'Anton', 'Arial Black', sans-serif;
   --font-chillax:   'Chillax', 'DM Sans', sans-serif;
 
   /* Colors — base */
@@ -69,6 +71,10 @@
   --text-primary:   #F5F5F5;
   --text-secondary: #9B9B9B;
   --text-muted:     #5A5A5A;
+
+  /* Inverse pair — primary buttons / inverted cards */
+  --invert-bg:      #F5F5F5;
+  --invert-fg:      #0A0A0A;
 }
 
 /* =====================
@@ -83,6 +89,10 @@
   --text-primary:   #0A0A0A;
   --text-secondary: #6B6B6B;
   --text-muted:     #9B9B9B;
+
+  /* Inverse pair — primary buttons / inverted cards */
+  --invert-bg:      #0A0A0A;
+  --invert-fg:      #F5F5F5;
 }
 
 /* =====================
@@ -132,4 +142,20 @@ h1, h2 {
 
 .light .glass {
   background: rgba(255,255,255,0.8);
+}
+
+/* Hide scrollbar (mobile project carousel) while keeping scroll */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Marked stone placeholder — used until real project photos arrive */
+.stone-placeholder {
+  background-color: #1a1a1a;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(155,168,176,0.10) 0 1px, transparent 2px),
+    radial-gradient(circle at 70% 60%, rgba(155,168,176,0.08) 0 1.5px, transparent 3px),
+    radial-gradient(circle at 45% 80%, rgba(220,227,231,0.06) 0 1px, transparent 2px),
+    radial-gradient(circle at 85% 25%, rgba(155,168,176,0.07) 0 1px, transparent 2px),
+    linear-gradient(135deg, #2a2a2a 0%, #171717 55%, #202020 100%);
+  background-size: 60px 60px, 90px 90px, 50px 50px, 70px 70px, 100% 100%;
 }

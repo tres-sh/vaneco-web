@@ -21,7 +21,7 @@ const canonicalURL = Astro.site
 ---
 
 <!doctype html>
-<html lang={lang} class="light">
+<html lang={lang} class="dark">
   <head>
     <!-- Meta -->
     <meta charset="UTF-8" />
@@ -56,12 +56,10 @@ const canonicalURL = Astro.site
     <script is:inline>
       (function () {
         const stored = localStorage.getItem("vaneco-theme");
-        const prefersDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
 
-        // Default: light. Only go dark if explicitly stored or system prefers dark
-        const isDark = stored === "dark" || (!stored && prefersDark);
+        // Dark is the product default. A stored choice always wins; with no
+        // stored choice we stay dark (design is dark-first).
+        const isDark = stored !== "light";
 
         const html = document.documentElement;
         if (isDark) {
