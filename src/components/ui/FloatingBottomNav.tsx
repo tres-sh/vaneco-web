@@ -52,7 +52,9 @@ const rightItems: Item[] = [
 function pathToKey(path: string): string {
   if (path === "/") return "home";
   if (path.startsWith("/proyectos")) return "gallery";
-  return "home";
+  // Other routes (e.g. /cita) show no active pill — the Agendar button,
+  // which is always highlighted, carries the context.
+  return "";
 }
 
 export function FloatingBottomNav({ currentPath = "/" }: FloatingBottomNavProps) {

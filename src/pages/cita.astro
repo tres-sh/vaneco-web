@@ -1,0 +1,21 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
+import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Footer } from "../components/ui/Footer";
+import { CitaFlow } from "../components/cita/CitaFlow";
+---
+
+<BaseLayout
+  title="Agendar cita — Vaneco"
+  description="Agenda tu visita sin costo y sin compromiso. Al agendar se crea tu folio para consultar y pagar tu cotización. Vaneco · Tijuana, B.C."
+  lang="es"
+>
+  <Navbar currentPath="/cita" client:load />
+  <MobileTopBar client:load />
+  <main>
+    <CitaFlow client:load />
+    <Footer client:load />
+  </main>
+  <FloatingBottomNav currentPath="/cita" client:load />
+</BaseLayout>
