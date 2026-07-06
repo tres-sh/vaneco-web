@@ -1,10 +1,11 @@
 # Vaneco — Architecture
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Last updated:** July 2026  
 **Status:** Evolving — vaneco-leads is mutating into vaneco-api; the public
-frontend's first three pages (`/`, `/proyectos`, `/cita`) are live on Vercel,
-running on local mock data until the API modules ship.
+frontend's public pages (landing, gallery, materials, about, FAQ, booking +
+quote-by-folio, privacy) are live on Vercel, running on local mock data until
+the API modules ship.
 
 ---
 
@@ -83,12 +84,17 @@ Public site + client portal. Everything in a single Astro domain and repository.
 |---|---|---|
 | `/` | SSG | ✅ Built |
 | `/proyectos` · `/proyectos/[id]` | SSG + React island | ✅ Built |
+| `/materiales` · `/nosotros` · `/faq` | SSG | ✅ Built |
+| `/privacidad` | SSG | ✅ Built |
 | `/cita` | SSG + React island | ✅ Built (mock) — SSR when API lands |
 | `/portal/*` | SSR + Auth guard | ⏳ Phase 2 |
 
 > Route names resolved: `/proyectos` (gallery), `/proyectos/[id]` (detail),
-> `/cita` (booking + quote-by-folio lookup). `/work`, `/book` and `/q/[token]`
-> from earlier drafts are superseded.
+> `/materiales` (guide), `/nosotros` (about), `/faq`, `/cita` (booking +
+> quote-by-folio), `/privacidad`. `/work`, `/book`, `/about` and `/q/[token]`
+> from earlier drafts are superseded. The three content pages (materiales,
+> nosotros, faq) are pure SSG and exist largely for **local SEO** (long-tail
+> queries + JSON-LD rich results).
 
 ---
 
@@ -329,7 +335,16 @@ src/
 │   ├── proyectos/
 │   │   ├── index.astro    ← SSG gallery
 │   │   └── [id].astro     ← SSG project detail
-│   └── cita.astro         ← SSG + island (SSR once API-connected)
+│   ├── materiales.astro   ← SSG guide (ItemList schema)
+│   ├── nosotros.astro     ← SSG about
+│   ├── faq.astro          ← SSG FAQ (<details> accordion + FAQPage schema)
+│   ├── cita.astro         ← SSG + island (SSR once API-connected)
+│   └── privacidad.astro   ← SSG privacy notice
+│
+├── data/
+│   ├── projects.ts        ← gallery mock data + derived filters
+│   ├── materials.ts       ← /materiales sections + ItemList
+│   └── faq.ts             ← /faq groups + faqJsonLd()
 │
 └── lib/
     ├── useLang.ts         ← shared ES/EN state across islands (CustomEvents)
@@ -344,6 +359,8 @@ src/
 | `/` | SSG | No | SEO, static content |
 | `/proyectos` | SSG | No | SEO, public gallery (filters run client-side in an island) |
 | `/proyectos/[id]` | SSG | No | SEO per project, shareable URL |
+| `/materiales` · `/nosotros` · `/faq` | SSG | No | Local SEO content + JSON-LD (ItemList / LocalBusiness / FAQPage) |
+| `/privacidad` | SSG | No | Static legal document (LFPDPPP) |
 | `/cita` | SSG → SSR | No (folio is the key) | Static now; SSR to create folios + read quotes |
 | `/portal` | SSR | Yes | Real-time user data *(Phase 2)* |
 
@@ -544,11 +561,16 @@ Phase 1 — Frontend
 [x] Landing page (hero, stats, project teaser, process, CTA) — bilingual ES/EN
 [x] Gallery /proyectos + /proyectos/[id] with material/color/finish filters
 [x] Booking + quote-lookup /cita (folio flow, IVA 8%, payment UI) — mock data
+[x] LFPDPPP consent checkbox gating the /cita submit
+[x] SEO content pages /materiales, /nosotros, /faq (+ ItemList/FAQPage schema)
+[x] /privacidad notice + global LocalBusiness JSON-LD
 [x] Deploy to Vercel (@astrojs/vercel adapter)
 [ ] Connect gallery → api.pvane.co/projects (replace local mock)
 [ ] Connect /cita → POST /appointments (create folio) + GET /cotizaciones/:folio (SSR)
+[ ] Persist consent_accepted_at + notice version on POST /appointments (+ server-side validate)
 [ ] Migrate /cita form to React Hook Form + Zod with loading/error states
-[ ] Real project photography (replace StonePlaceholder)
+[ ] EN copy for /materiales, /nosotros, /faq, /privacidad
+[ ] Legal review of the privacy notice; real project + workshop photography
 
 Phase 2
 [ ] Client portal (SSR + auth guard)

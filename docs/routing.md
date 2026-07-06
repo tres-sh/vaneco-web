@@ -1,14 +1,16 @@
 # Vaneco — Routing
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Last updated:** July 2026
 
-> **Update (July 2026):** The public site's first three pages are implemented —
-> `/` (landing), `/proyectos` + `/proyectos/[id]` (gallery), and `/cita`
-> (booking + quote lookup). Route names are now resolved: **`/proyectos`**
-> (not `/galeria`), **`/cita`** (not `/book`), and the project detail is its
-> own SEO route **`/proyectos/[id]`** (not a modal). Quote consultation is keyed
-> by **folio**, not by a one-time token.
+> **Update (July 2026):** The public site is implemented — `/` (landing),
+> `/proyectos` + `/proyectos/[id]` (gallery), `/materiales`, `/nosotros`, `/faq`,
+> `/cita` (booking + quote lookup) and `/privacidad`. Route names are resolved:
+> **`/proyectos`** (not `/galeria`), **`/cita`** (not `/book`), **`/nosotros`**
+> (not `/about`); the project detail is its own SEO route **`/proyectos/[id]`**
+> (not a modal). Quote consultation is keyed by **folio**, not by a one-time
+> token. SEO structured data (LocalBusiness / ItemList / FAQPage) ships with the
+> pages.
 
 ---
 
@@ -57,8 +59,25 @@ SSG today; `/cita` flips to SSR once wired to `api.pvane.co`.
 | `/` | SSG | ✅ Built | Landing — hero, stats, project teaser, process, CTA |
 | `/proyectos` | SSG | ✅ Built | Full gallery + material/color/finish filters (island) |
 | `/proyectos/[id]` | SSG | ✅ Built | Individual project detail (own route for SEO/sharing) |
+| `/materiales` | SSG | ✅ Built | Materials guide — 5 anchored sections + ItemList schema |
+| `/nosotros` | SSG | ✅ Built | About the workshop — history, stats, service area |
+| `/faq` | SSG | ✅ Built | FAQ accordion (`<details>`) + FAQPage schema |
 | `/cita` | SSG + island | ✅ Built | Book a visit (creates folio) + quote lookup by folio |
-| `/about` | SSG | ⏳ Deferred | Vaneco story — not yet designed |
+| `/privacidad` | SSG | ✅ Built | Privacy notice (LFPDPPP), linked from the `/cita` consent |
+
+> **Navigation:** the navbar now carries `Inicio · Proyectos · Materiales ·
+> Nosotros · FAQ` (active state by route) + the ES/EN pill, theme button and
+> `Agendar visita` CTA. Every footer links **Privacidad**. The mobile
+> FloatingBottomNav still shows 5 fixed items (Inicio · Galería · Agendar ·
+> Contacto · Ajustes) — Materiales/Nosotros/FAQ are reached via the desktop nav
+> or the footer for now.
+
+> **SEO / structured data:** a global **`LocalBusiness`** JSON-LD (NAP +
+> `areaServed`: Tijuana, Playas de Rosarito, Tecate, Ensenada) is emitted from
+> `BaseLayout` on every page; `/faq` adds **`FAQPage`** and `/materiales` adds
+> **`ItemList`**, each generated from the same data that renders the page
+> (single source of truth). FAQ answers render in the served HTML — the
+> accordion only collapses them.
 
 > **Current data source:** the gallery and quote lookup run on **local mock
 > data** (`src/data/projects.ts` and an in-island quote map that accepts
@@ -257,7 +276,10 @@ GET    /v1/appointments/:id    ← appointment detail [ADMIN]
 PATCH  /v1/appointments/:id    ← confirm / cancel [ADMIN]
 ```
 The public `/cita` form calls `POST /v1/appointments`; the response carries the
-generated **folio** (backend-assigned; the prototype mocks `COT-VNC-####`).
+generated **folio** (backend-assigned; the prototype mocks `COT-VNC-####`). The
+form requires **privacy consent** (LFPDPPP): the request must persist
+`consent_accepted_at` (timestamp) + the accepted notice version, and the server
+must re-validate consent — never trust the front-end gate alone.
 
 #### Cotizaciones (quote lookup by folio)
 ```
@@ -429,7 +451,11 @@ src/
 │   ├── proyectos/
 │   │   ├── index.astro        ← gallery (SSG)
 │   │   └── [id].astro         ← project detail (SSG, getStaticPaths)
+│   ├── materiales.astro       ← materials guide (SSG + ItemList schema)
+│   ├── nosotros.astro         ← about the workshop (SSG)
+│   ├── faq.astro              ← FAQ accordion (SSG + FAQPage schema)
 │   ├── cita.astro             ← booking + quote lookup (SSG + island)
+│   ├── privacidad.astro       ← privacy notice (SSG)
 │   └── (planned) login, portal/*, cotizacion/[folio]
 ├── components/
 │   ├── ui/                    ← Navbar + MobileTopBar, FloatingBottomNav,
@@ -437,9 +463,11 @@ src/
 │   │                            Controls (LangToggle, ThemeButton), ThemeToggle
 │   ├── home/                  ← Home, StonePlaceholder
 │   ├── projects/              ← ProjectGallery, ProjectDetail
-│   └── cita/                  ← CitaFlow
+│   └── cita/                  ← CitaFlow (with LFPDPPP consent checkbox)
 ├── data/
-│   └── projects.ts            ← local mock data + derived filter options
+│   ├── projects.ts            ← local mock data + derived filter options
+│   ├── materials.ts           ← 5 materials (drives /materiales + ItemList)
+│   └── faq.ts                 ← FAQ groups (drives /faq + FAQPage schema)
 ├── layouts/
 │   └── BaseLayout.astro       ← head, fonts, theme flash-guard script
 └── lib/

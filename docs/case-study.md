@@ -122,6 +122,10 @@ The highest-friction points in the current workflow are quotation and appointmen
 
 **Booking + quote lookup (`/cita`)** — a two-tab client-facing page. Tab one is the appointment form (name, phone with `+52` prefix, email, work type, address, date, time); on submit a ticket is created and a **folio** is generated, and the client receives a WhatsApp confirmation via the existing Meta Cloud API. Tab two is the **quote lookup**: enter the folio to see line items, subtotal, IVA (8%), total, a status badge, and payment options (bank transfer with CLABE, or cash at the workshop). The two tabs connect — after booking, "Ver mi cotización" jumps to the freshly-created folio. *(Front-end shipped on mock data; API wiring and Stripe are the next step.)*
 
+**SEO content layer** — three static pages exist mostly to win local search: `/materiales` (a granite/quartz/quartzite/marble/onyx guide with spec tables, each linking into the filtered gallery), `/nosotros` (history + service area: Tijuana, Rosarito, Tecate, Ensenada), and `/faq` (a no-JS `<details>` accordion whose answers ship in the HTML). Each renders JSON-LD from the same data it displays — `LocalBusiness` globally, `ItemList` on materials, `FAQPage` on the FAQ — so Google can surface rich results for queries like "cuánto cuesta una cubierta de granito en Tijuana". No prices are ever shown; every answer routes to "agenda y cotiza con tu folio".
+
+**Privacy + consent** — because the booking form collects a home address, Mexico's LFPDPPP requires the privacy notice at the point of capture. The `/cita` form gates its submit behind a consent checkbox linking to `/privacidad`, and the backend will persist the consent timestamp + notice version as evidence.
+
 ### Phase 2 — Client portal
 
 **Client login** — clients view their order status, quote breakdown, and production progress. Status flow: Pending Visit → Quoted → Approved → In Fabrication → Installed.
@@ -173,13 +177,18 @@ The system uses a layered depth model — darker backgrounds recede, lighter sur
 | Input | underline · `+52` phone prefix · select · date (in `/cita`) | ✅ Code complete (inline) |
 | Card | project card · floating chips · StonePlaceholder image slot | ✅ Code complete |
 | Badge | folio status (4 colors) · filter chips · material/type chips | ✅ Code complete (inline) |
-| Navbar + MobileTopBar | desktop centered · single-color logo · pill + theme + CTA | ✅ Code complete |
+| Navbar + MobileTopBar | 5 links · single-color logo · pill + theme + CTA | ✅ Code complete |
 | FloatingBottomNav | pill animation · Agendar always highlighted · iOS-native feel | ✅ Code complete |
+| FAQ accordion | native `<details>` · one-open · no-JS · answers in HTML | ✅ Code complete |
+| Consent checkbox | custom box · gates submit · links privacy notice | ✅ Code complete |
 
-Shipped on three live pages: `/` (landing), `/proyectos` + `/proyectos/[id]`
-(gallery), `/cita` (booking + quote-by-folio) — all bilingual ES/EN and
-dark/light, deployed on Vercel. Real project photography and the API wiring are
-the remaining gaps (placeholders + local mock data stand in today).
+Shipped on eight live pages: `/` (landing), `/proyectos` + `/proyectos/[id]`
+(gallery), `/materiales`, `/nosotros`, `/faq`, `/cita` (booking + quote-by-folio)
+and `/privacidad` — dark/light, the app pages bilingual ES/EN, deployed on
+Vercel. The three content pages are SEO-first (long-tail queries + JSON-LD:
+`LocalBusiness` global, `ItemList` on materials, `FAQPage` on the FAQ). Real
+photography and the API wiring are the remaining gaps (placeholders + local mock
+data stand in today).
 
 ### Key design decisions
 
@@ -204,7 +213,11 @@ Everything lives under a single domain — `pvane.co`. No separate subdomains fo
 ```
 pvane.co/              ← static (Astro SSG) — landing, SEO
 pvane.co/proyectos     ← static + React island — gallery + filters
+pvane.co/materiales    ← static — materials guide (ItemList schema)
+pvane.co/nosotros      ← static — about the workshop
+pvane.co/faq           ← static — FAQ accordion (FAQPage schema)
 pvane.co/cita          ← static + React island — booking + quote lookup by folio
+pvane.co/privacidad    ← static — privacy notice (LFPDPPP)
 pvane.co/portal/*      ← server rendered (Astro SSR) — client portal (Phase 2)
 
 api.pvane.co           ← NestJS API (already in production)
@@ -298,4 +311,4 @@ Interested in the intersection of software, small business, and the US-Mexico bo
 
 ---
 
-*This case study is documented in real time as the product is built. Last updated: July 2026 — public site (`/`, `/proyectos`, `/cita`) shipped on Vercel; API wiring, real photography and the client portal are next.*
+*This case study is documented in real time as the product is built. Last updated: July 2026 — public site shipped on Vercel (landing, gallery, materials, about, FAQ, booking + quote-by-folio, privacy notice); API wiring, EN copy, legal review, real photography and the client portal are next.*

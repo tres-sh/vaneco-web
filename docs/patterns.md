@@ -1,6 +1,6 @@
 # Vaneco — Patterns
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Last updated:** July 2026
 
 > **Update (July 2026):** §1 now documents the patterns actually in use on the
@@ -87,6 +87,37 @@ Filter option lists are **derived from the data** (never hardcoded in markup) so
 materials/finishes stay extensible. The quote lookup uses a small in-island map
 (`COT-YNG-2606` + any `COT-VNC-####`). Swapping to `api.pvane.co` is a
 data-source change, not a UI change.
+
+### One data source → HTML + JSON-LD *(shipped)*
+
+SEO pages render their content **and** their structured data from the same
+array, so the schema can never drift from what's on screen (spec rule). `/faq`
+maps `data/faq.ts` into the accordion and into `faqJsonLd()` (FAQPage);
+`/materiales` maps `data/materials.ts` into the sections and into an `ItemList`.
+`BaseLayout` takes a `jsonLd` prop and always prepends a global `LocalBusiness`.
+
+```astro
+---
+import { faqGroups, faqJsonLd } from "../data/faq";
+---
+<BaseLayout jsonLd={[faqJsonLd()]}>
+  {faqGroups.map((g) => /* same source renders the accordion */)}
+</BaseLayout>
+```
+
+### No-JS accordion via native `<details>` *(shipped)*
+
+`/faq` uses `<details name="faq">` — the browser gives exclusive open (one at a
+time) and the answers are in the served HTML (crawlable, works with JS off). A
+`+`/`−` sign is pure CSS off `details[open]`; no island. Reach for an island
+only when the interaction can't be expressed declaratively.
+
+### Consent-gated submit *(shipped)*
+
+`/cita` keeps a `consent: boolean` and renders the submit button `disabled`
+until it's true (LFPDPPP). The gate is **UX only** — the server must re-validate
+consent and persist `consent_accepted_at` + the accepted notice version. Never
+trust a front-end gate for a legal requirement.
 
 ### Custom hooks — encapsulate logic
 
