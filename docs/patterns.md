@@ -1,7 +1,13 @@
 # Vaneco — Patterns
 
-**Version:** 0.1.0  
-**Last updated:** May 2025
+**Version:** 0.2.0  
+**Last updated:** July 2026
+
+> **Update (July 2026):** §1 now documents the patterns actually in use on the
+> public site (island i18n/theme sync, colocated bilingual copy, URL-synced
+> filters, local mock data). The React Query / RHF+Zod / Zustand sections
+> (§2–§4) describe the **target** once the pages wire to `api.pvane.co`; today
+> the shipped islands use plain `useState` + local data.
 
 ---
 
@@ -18,6 +24,69 @@
 ---
 
 ## 1. Frontend — React patterns
+
+### Cross-island state via CustomEvents + hooks *(shipped)*
+
+Astro islands are independent React roots — they don't share a provider. Vaneco
+keeps **language** and **theme** in sync across every island (Navbar,
+MobileTopBar, Home, ProjectGallery, CitaFlow, Footer) with a tiny event bus:
+`localStorage` for persistence + a `window` CustomEvent for live broadcast.
+
+```ts
+// src/lib/useLang.ts — same shape as useTheme.ts
+export function useLang(initial: Lang = "es") {
+  const [lang, setLangState] = useState<Lang>(initial);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("vaneco-lang") as Lang | null;
+    if (stored) setLangState(stored);
+    const onLang = (e: Event) => setLangState((e as CustomEvent).detail.lang);
+    window.addEventListener("vaneco:lang-change", onLang);
+    return () => window.removeEventListener("vaneco:lang-change", onLang);
+  }, []);
+
+  function setLang(next: Lang) {
+    setLangState(next);
+    localStorage.setItem("vaneco-lang", next);
+    window.dispatchEvent(new CustomEvent("vaneco:lang-change", { detail: { lang: next } }));
+  }
+  return [lang, setLang] as const;
+}
+```
+
+- One island calls `setLang`/`toggle`; **all** islands re-render in the new
+  language/theme — no context, no Zustand, no prop drilling across islands.
+- Theme persistence + the `light`/`dark` class on `<html>` are owned by an
+  inline flash-guard script in `BaseLayout.astro`; `useTheme` only reads and
+  broadcasts. Dark is the default (class set before first paint → no flash).
+- Rule of thumb: reach for this bus **only** for cross-island global UI state
+  (lang, theme). Everything else stays local (`useState`).
+
+### Colocated bilingual copy *(shipped)*
+
+Each island owns a `copy` / `ui` dictionary keyed by `es`/`en`; the component
+reads `copy[lang]`. Copy lives next to the component that uses it, not in a
+central i18n bundle — islands are few and self-contained.
+
+```tsx
+const copy = { es: { cta: "Agendar visita" }, en: { cta: "Book a visit" } } as const;
+function Hero() { const [lang] = useLang(); const t = copy[lang]; return <a>{t.cta}</a>; }
+```
+
+### Filters synced to the URL *(shipped)*
+
+`/proyectos` mirrors its material/color/finish filters into the query string with
+`history.replaceState` (no new history entries). Opening a project and pressing
+**back** restores the exact filter set — the gallery re-hydrates from the URL on
+mount. AND-combined; `todos` = no constraint.
+
+### Local mock data layer *(shipped, temporary)*
+
+`src/data/projects.ts` is the single source for the gallery until the API lands.
+Filter option lists are **derived from the data** (never hardcoded in markup) so
+materials/finishes stay extensible. The quote lookup uses a small in-island map
+(`COT-YNG-2606` + any `COT-VNC-####`). Swapping to `api.pvane.co` is a
+data-source change, not a UI change.
 
 ### Custom hooks — encapsulate logic
 
@@ -101,14 +170,14 @@ Components live close to where they are used. Only promoted to `ui/` when genuin
 
 ```
 components/
-├── ui/                    ← design system — Button, Input, Card
+├── ui/                    ← design system — Button, Footer, Navbar, Controls...
 │   └── Button.tsx         ← used across the entire project
-├── sections/              ← landing sections
-│   ├── Hero.tsx           ← only in index
-│   └── Gallery.tsx        ← only in index and /work
-└── portal/                ← client portal components
-    ├── OrderTimeline.tsx   ← only in /portal/orders/[id]
-    └── QuoteView.tsx       ← only in /portal/quotes/[id]
+├── home/                  ← landing island + StonePlaceholder
+│   └── Home.tsx           ← only in index
+├── projects/              ← ProjectGallery, ProjectDetail
+│   └── ProjectDetail.tsx  ← only in /proyectos/[id]
+└── cita/                  ← booking + quote flow
+    └── CitaFlow.tsx       ← only in /cita
 ```
 
 ---
@@ -310,7 +379,8 @@ export type AppointmentFormData = z.infer<typeof appointmentSchema>
 ### Form component
 
 ```tsx
-// src/components/sections/BookForm.tsx
+// Target for src/components/cita/CitaFlow.tsx (schedule tab) — RHF + Zod.
+// Shipped today with plain useState; this is the shape it migrates to.
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { appointmentSchema, AppointmentFormData } from '@/schemas/appointment.schema'
@@ -401,12 +471,17 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 
 | State type | Solution | Example |
 |---|---|---|
-| API data | React Query | Ticket list, order detail |
-| Form state | useState / RHF | Form fields |
-| Local UI | useState | Modal open/closed, active tab |
-| Auth / user | Zustand | JWT token, user data |
-| Preferences | Zustand + localStorage | Theme, language |
-| Table filters | useState | Zone, status, date |
+| API data | React Query *(when API lands)* | Ticket list, order detail |
+| Form state | useState / RHF | `/cita` fields (useState today; RHF+Zod target) |
+| Local UI | useState | Active tab (`/cita`), confirmation state, quote result |
+| Cross-island UI | CustomEvents + `useLang`/`useTheme` (§1) | Language, theme |
+| Auth / user | Zustand *(Phase 2)* | JWT token, user data |
+| Gallery filters | useState + URL query params | material / color / finish |
+
+> **Preferences note:** language and theme are shared across islands with the
+> lightweight event bus (§1), **not** Zustand — islands are separate React roots,
+> so a `window` event + `localStorage` is simpler than mounting a store in each.
+> Zustand enters in Phase 2 for auth/portal state that spans a single SPA-like tree.
 
 ### Zustand — only for auth and preferences
 

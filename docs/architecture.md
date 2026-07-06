@@ -1,8 +1,10 @@
 # Vaneco — Architecture
 
-**Version:** 0.1.0  
-**Last updated:** May 2025  
-**Status:** Evolving — vaneco-leads is mutating into vaneco-api
+**Version:** 0.2.0  
+**Last updated:** July 2026  
+**Status:** Evolving — vaneco-leads is mutating into vaneco-api; the public
+frontend's first three pages (`/`, `/proyectos`, `/cita`) are live on Vercel,
+running on local mock data until the API modules ship.
 
 ---
 
@@ -79,11 +81,14 @@ Public site + client portal. Everything in a single Astro domain and repository.
 
 | Route | Type | Status |
 |---|---|---|
-| `/` | SSG | ⏳ Phase 1 |
-| `/work` | SSG | ⏳ Phase 1 |
-| `/book` | SSG + React island | ⏳ Phase 1 |
+| `/` | SSG | ✅ Built |
+| `/proyectos` · `/proyectos/[id]` | SSG + React island | ✅ Built |
+| `/cita` | SSG + React island | ✅ Built (mock) — SSR when API lands |
 | `/portal/*` | SSR + Auth guard | ⏳ Phase 2 |
-| `/quote/*` | SSR + Auth guard | ⏳ Phase 1 |
+
+> Route names resolved: `/proyectos` (gallery), `/proyectos/[id]` (detail),
+> `/cita` (booking + quote-by-folio lookup). `/work`, `/book` and `/q/[token]`
+> from earlier drafts are superseded.
 
 ---
 
@@ -266,6 +271,16 @@ enum QuoteStatus       { DRAFT SENT APPROVED REJECTED }
 enum AppointmentStatus { PENDING CONFIRMED COMPLETED CANCELLED }
 ```
 
+> **Folio — the client's key.** Booking a visit generates a **folio**
+> (`COT-…`, backend-assigned; the frontend prototype mocks `COT-VNC-####`). The
+> folio is the public, login-less handle a client uses to look up and pay their
+> quote. It maps onto the models above (an appointment/ticket carries the folio;
+> the quote is read by folio). The four client-facing statuses surfaced in
+> `/cita` — `Cita agendada`, `Pendiente de pago`, `En fabricación`,
+> `Cancelada` — are a simplified projection of `TicketStatus`/`QuoteStatus`.
+> Quote math is fixed: **IVA 8%** (border region) and a **50% deposit** to move
+> into fabrication.
+
 ---
 
 ## 4. Frontend — pvane.co
@@ -276,15 +291,17 @@ enum AppointmentStatus { PENDING CONFIRMED COMPLETED CANCELLED }
 |---|---|---|
 | Framework | Astro | 6.3.6 |
 | UI Islands | React | 19 |
-| Components | shadcn/ui + custom | — |
+| Components | Custom design-system (`components/ui`) | — |
+| Icons | lucide-react | 1.16 |
 | Styles | Tailwind CSS | v4 — config via `@theme` in CSS |
 | Tailwind plugin | @tailwindcss/vite | 4.3.0 |
-| Images | Cloudflare Images + Astro Image | — |
+| Images | Cloudflare Images + Astro Image | *(planned; StonePlaceholder for now)* |
 | Transitions | Astro View Transitions | native |
-| HTTP client | fetch + React Query | TanStack v5 |
-| Forms | React Hook Form + Zod | RHF 7 / Zod 4 |
-| State | Zustand | — |
-| Adapter | @astrojs/node standalone | 10+ |
+| HTTP client | fetch + React Query | TanStack v5 *(installed; wired with API)* |
+| Forms | React Hook Form + Zod | RHF 7 / Zod 4 *(installed; `/cita` uses plain `useState` until API)* |
+| Cross-island state | Custom hooks over `window` CustomEvents + `localStorage` | `useLang`, `useTheme` |
+| Global state | Zustand | *(planned — auth/portal, Phase 2)* |
+| Adapter | **@astrojs/vercel** | 10 |
 
 > ⚠️ **Tailwind v4** — no `tailwind.config.mjs`. Tokens live in `src/styles/global.css` inside `@theme { }`. The plugin is registered in `vite.plugins`, not in `integrations`.
 
@@ -293,34 +310,31 @@ enum AppointmentStatus { PENDING CONFIRMED COMPLETED CANCELLED }
 ```
 src/
 ├── components/
-│   ├── ui/                ← design system (Button, Input, Card...)
-│   ├── sections/          ← Hero, Gallery, Process, BookForm
-│   └── portal/            ← OrderTimeline, QuoteView, etc.
+│   ├── ui/                ← design system — Navbar + MobileTopBar,
+│   │                        FloatingBottomNav, Button, Footer, Controls, ThemeToggle
+│   ├── home/              ← Home, StonePlaceholder (landing sections)
+│   ├── projects/          ← ProjectGallery, ProjectDetail
+│   ├── cita/              ← CitaFlow (booking + quote lookup)
+│   └── (planned) portal/  ← OrderTimeline, QuoteView
 │
 ├── layouts/
-│   ├── BaseLayout.astro   ← head, fonts, theme
-│   └── PortalLayout.astro ← auth guard + portal nav
+│   └── BaseLayout.astro   ← head, fonts, theme flash-guard inline script
+│                            (PortalLayout planned for Phase 2)
+│
+├── data/
+│   └── projects.ts        ← local mock data + derived filter options
 │
 ├── pages/
 │   ├── index.astro        ← SSG landing
-│   ├── work/
+│   ├── proyectos/
 │   │   ├── index.astro    ← SSG gallery
-│   │   └── [slug].astro   ← SSG project detail
-│   ├── book.astro         ← SSG + React island
-│   └── portal/
-│       ├── index.astro    ← SSR client dashboard
-│       ├── orders/
-│       │   └── [id].astro ← SSR order detail
-│       └── quotes/
-│           └── [id].astro ← SSR quote view
+│   │   └── [id].astro     ← SSG project detail
+│   └── cita.astro         ← SSG + island (SSR once API-connected)
 │
-├── lib/
-│   ├── api.ts             ← fetch wrapper → api.pvane.co
-│   ├── auth.ts            ← token storage + guards
-│   └── utils.ts
-│
-└── types/
-    └── index.ts           ← shared types with the API
+└── lib/
+    ├── useLang.ts         ← shared ES/EN state across islands (CustomEvents)
+    ├── useTheme.ts        ← shared dark/light state across islands
+    └── (planned) api.ts, auth.ts, types
 ```
 
 ### Rendering per route
@@ -328,12 +342,10 @@ src/
 | Route | Output | Auth | Reason |
 |---|---|---|---|
 | `/` | SSG | No | SEO, static content |
-| `/work` | SSG | No | SEO, public gallery |
-| `/work/[slug]` | SSG | No | SEO per project |
-| `/book` | SSG | No | Static form |
-| `/portal` | SSR | Yes | Real-time user data |
-| `/portal/orders/[id]` | SSR | Yes | Up-to-date order status |
-| `/portal/quotes/[id]` | SSR | Yes | Fresh quote data |
+| `/proyectos` | SSG | No | SEO, public gallery (filters run client-side in an island) |
+| `/proyectos/[id]` | SSG | No | SEO per project, shareable URL |
+| `/cita` | SSG → SSR | No (folio is the key) | Static now; SSR to create folios + read quotes |
+| `/portal` | SSR | Yes | Real-time user data *(Phase 2)* |
 
 ### Auth guard in Astro
 
@@ -443,11 +455,17 @@ jobs:
 ### Frontend deploy
 
 ```
-pvane.co → Cloudflare Pages (recommended) or Vercel
-  - Auto deploy on push to main
+pvane.co → Vercel (via @astrojs/vercel adapter)
+  - Auto deploy on push to main (repo tres-sh/vaneco-web)
   - Preview deploys on PRs
-  - Edge network — nodes in TJ/LA/SD
+  - Build Output API (.vercel/output) — static today, SSR functions when /cita connects
 ```
+
+> **Adapter note:** the project originally used `@astrojs/node` (standalone),
+> which produced a self-hosted Node server Vercel could not route (404 on every
+> path). Swapped to `@astrojs/vercel@10` (Astro 6-compatible), which emits the
+> Vercel Build Output format. Fully static pages ship as static; only
+> non-prerendered routes become serverless functions.
 
 ---
 
@@ -521,15 +539,20 @@ Phase 1 — Backend
 [ ] Extend Prisma schema with new models
 
 Phase 1 — Frontend
-[ ] Setup Astro + React + Tailwind + shadcn ✅
-[ ] Implement design system components
-[ ] Landing page with gallery
-[ ] Appointment form (React island)
-[ ] Connect form → api.pvane.co/appointments
+[x] Setup Astro + React + Tailwind (@theme tokens, dark default)
+[x] Design-system components (Navbar/MobileTopBar, FloatingBottomNav, Button, Footer, Controls)
+[x] Landing page (hero, stats, project teaser, process, CTA) — bilingual ES/EN
+[x] Gallery /proyectos + /proyectos/[id] with material/color/finish filters
+[x] Booking + quote-lookup /cita (folio flow, IVA 8%, payment UI) — mock data
+[x] Deploy to Vercel (@astrojs/vercel adapter)
+[ ] Connect gallery → api.pvane.co/projects (replace local mock)
+[ ] Connect /cita → POST /appointments (create folio) + GET /cotizaciones/:folio (SSR)
+[ ] Migrate /cita form to React Hook Form + Zod with loading/error states
+[ ] Real project photography (replace StonePlaceholder)
 
 Phase 2
 [ ] Client portal (SSR + auth guard)
-[ ] Stripe integration
+[ ] Stripe payment links (transfer/deposit) — folio → En fabricación
 [ ] Order tracking timeline
 ```
 

@@ -13,11 +13,23 @@ interface NavbarProps {
 // =====================
 const t = {
   es: {
-    nav: { home: "Inicio", projects: "Proyectos", process: "Proceso" },
+    nav: {
+      home: "Inicio",
+      projects: "Proyectos",
+      materials: "Materiales",
+      about: "Nosotros",
+      faq: "FAQ",
+    },
     cta: "Agendar visita",
   },
   en: {
-    nav: { home: "Home", projects: "Projects", process: "Process" },
+    nav: {
+      home: "Home",
+      projects: "Projects",
+      materials: "Materials",
+      about: "About",
+      faq: "FAQ",
+    },
     cta: "Book a visit",
   },
 } as const;
@@ -25,7 +37,9 @@ const t = {
 const navLinks = [
   { key: "home", href: "/" },
   { key: "projects", href: "/proyectos" },
-  { key: "process", href: "/#proceso" },
+  { key: "materials", href: "/materiales" },
+  { key: "about", href: "/nosotros" },
+  { key: "faq", href: "/faq" },
 ] as const;
 
 // =====================

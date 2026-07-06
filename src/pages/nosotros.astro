@@ -1,0 +1,162 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
+import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Footer } from "../components/ui/Footer";
+import { PrimaryBtn } from "../components/ui/Button";
+import { StonePlaceholder } from "../components/home/StonePlaceholder";
+
+const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
+
+const stats = [
+  { n: "10", label: "Años de taller" },
+  { n: "500", label: "Cocinas instaladas" },
+  { n: "25,000", label: "ft² de piedra instalada", accent: true },
+];
+
+const cities = [
+  {
+    name: "Tijuana",
+    badge: "Taller",
+    note: "Nuestro taller y la mayoría de nuestros proyectos: cubiertas de granito y cuarzo en toda la ciudad.",
+  },
+  {
+    name: "Rosarito",
+    note: "Cubiertas residenciales y comerciales, con visita y cotización a domicilio.",
+  },
+  {
+    name: "Tecate",
+    note: "Visita a domicilio sin costo; fabricamos en Tijuana e instalamos en tu casa.",
+  },
+  {
+    name: "Ensenada",
+    note: "Proyectos residenciales y comerciales seleccionados en la zona vinícola y la ciudad.",
+  },
+];
+---
+
+<BaseLayout
+  title="Taller de cubiertas de piedra natural en Tijuana — Nosotros | Vaneco"
+  description="Taller de piedra natural con 10 años de experiencia. Cubiertas de granito, cuarzo y mármol en Tijuana, Rosarito, Tecate y Ensenada. Sin intermediarios."
+  lang="es"
+>
+  <Navbar currentPath="/nosotros" client:load />
+  <MobileTopBar client:load />
+
+  <main class="pt-15">
+    {/* ===== HISTORY ===== */}
+    <section class={`${SHELL} pt-12 pb-8 md:pt-16 md:pb-12`}>
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_520px] items-center gap-8 lg:gap-16">
+        <div>
+          <p class="text-[12px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            El taller
+          </p>
+          <h1 class="mt-3 font-franchise leading-[0.92] text-[var(--text-primary)] text-[44px] md:text-[88px]">
+            DIEZ AÑOS<br />CORTANDO PIEDRA.
+          </h1>
+          <div class="mt-6 max-w-[520px] space-y-4 text-[16px] font-light leading-[1.7] text-[var(--text-secondary)]">
+            <p>
+              Vaneco es un taller de piedra natural en Tijuana. Empezamos hace
+              diez años cortando losas para otros; hoy diseñamos, fabricamos e
+              instalamos cubiertas de granito, cuarzo y mármol con equipo propio.
+            </p>
+            <p>
+              Sin intermediarios significa una sola responsabilidad y un solo
+              precio: el del taller. La misma mano que corta tu losa es la que la
+              instala en tu cocina.
+            </p>
+          </div>
+        </div>
+
+        <div class="lg:order-last">
+          <StonePlaceholder className="h-[300px] lg:h-[480px] rounded-2xl">
+            <span class="absolute inset-0 z-10 grid place-items-center text-[13px] text-white/45">
+              Foto — el taller en Tijuana
+            </span>
+          </StonePlaceholder>
+        </div>
+      </div>
+    </section>
+
+    {/* ===== STATS ===== */}
+    <section class="border-y border-[var(--border-default)]">
+      <div class={SHELL}>
+        <div class="grid grid-cols-3">
+          {
+            stats.map((s, i) => (
+              <div class={`py-8 md:py-12 px-2 md:px-4 ${i > 0 ? "border-l border-[var(--border-default)] pl-4 md:pl-10" : ""}`}>
+                <div
+                  class="font-franchise text-[32px] md:text-[56px] leading-none"
+                  style={`color: ${s.accent ? "#9BA8B0" : "var(--text-primary)"}`}
+                >
+                  {s.n}
+                </div>
+                <div class="mt-2 text-[10px] md:text-[12px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                  {s.label}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    {/* ===== SERVICE AREA ===== */}
+    <section class={`${SHELL} py-14 md:py-20`}>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+        <h2 class="font-franchise text-[32px] md:text-[48px] leading-none text-[var(--text-primary)]">
+          ZONA DE SERVICIO
+        </h2>
+        <p class="max-w-[360px] text-[15px] md:text-[16px] font-light text-[var(--text-secondary)]">
+          Visitas a domicilio sin costo en toda la zona. El taller está en
+          Tijuana; la instalación viaja contigo.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {
+          cities.map((c) => (
+            <div class="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-7">
+              <div class="flex items-center gap-2.5">
+                <h3 class="font-franchise text-[28px] md:text-[30px] leading-none text-[var(--text-primary)]">
+                  {c.name.toUpperCase()}
+                </h3>
+                {c.badge && (
+                  <span
+                    class="rounded-[10px] px-2 py-0.5 text-[11px] text-veta"
+                    style="background: rgba(155,168,176,0.12)"
+                  >
+                    {c.badge}
+                  </span>
+                )}
+              </div>
+              <p class="mt-3 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                {c.note}
+              </p>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* ===== FINAL CTA ===== */}
+    <section class={`${SHELL} pb-14 md:pb-20`}>
+      <div class="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-6 py-12 md:px-8 md:py-20 text-center">
+        <h2 class="font-franchise text-[36px] md:text-[72px] leading-[0.95] text-[var(--text-primary)]">
+          CONÓCENOS EN PERSONA
+        </h2>
+        <p class="mx-auto mt-4 max-w-[520px] text-[15px] md:text-[16px] text-[var(--text-secondary)]">
+          Agenda una visita o ven al taller a ver las losas. Sin costo y sin
+          compromiso.
+        </p>
+        <div class="mt-7 flex justify-center">
+          <PrimaryBtn href="/cita">Agendar visita</PrimaryBtn>
+        </div>
+      </div>
+    </section>
+
+    <Footer client:load />
+  </main>
+
+  <FloatingBottomNav currentPath="/nosotros" client:load />
+</BaseLayout>

@@ -3,8 +3,8 @@ import { useLang } from "../../lib/useLang";
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 
 const t = {
-  es: { rights: "© 2026 Vaneco · piedrasvaneco.com" },
-  en: { rights: "© 2026 Vaneco · piedrasvaneco.com" },
+  es: { rights: "© 2026 Vaneco", privacy: "Privacidad" },
+  en: { rights: "© 2026 Vaneco", privacy: "Privacy" },
 } as const;
 
 export function Footer() {
@@ -35,7 +35,13 @@ export function Footer() {
           </a>
           <span>Tijuana, B.C.</span>
         </div>
-        <div className="text-[13px] text-[var(--text-muted)]">{t[lang].rights}</div>
+        <div className="flex items-center gap-2 text-[13px] text-[var(--text-muted)]">
+          <span>{t[lang].rights}</span>
+          <span>·</span>
+          <a href="/privacidad" className="hover:text-[var(--text-secondary)] transition-colors">
+            {t[lang].privacy}
+          </a>
+        </div>
       </div>
     </footer>
   );

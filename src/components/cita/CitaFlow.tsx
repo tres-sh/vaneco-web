@@ -66,6 +66,12 @@ const copy = {
       submit: "Agendar y generar folio",
       error: "Completa todos los campos para continuar.",
       placeholderType: "Selecciona…",
+      consentPre: "He leído y acepto el ",
+      consentLink: "Aviso de Privacidad",
+      consentPost:
+        " y autorizo a Piedras Vaneco el uso de mis datos para agendar la visita, generar mi folio y dar seguimiento a mi cotización.",
+      consentNote:
+        "El botón se habilita al aceptar. Tus datos nunca se comparten con terceros.",
     },
     confirm: {
       title: ["CITA", "AGENDADA"],
@@ -132,6 +138,12 @@ const copy = {
       submit: "Book and generate folio",
       error: "Fill in every field to continue.",
       placeholderType: "Select…",
+      consentPre: "I have read and accept the ",
+      consentLink: "Privacy Notice",
+      consentPost:
+        " and authorize Piedras Vaneco to use my data to book the visit, generate my folio and follow up on my quote.",
+      consentNote:
+        "The button enables once you accept. Your data is never shared with third parties.",
     },
     confirm: {
       title: ["VISIT", "BOOKED"],
@@ -241,6 +253,7 @@ export function CitaFlow() {
   const empty = { name: "", phone: "", email: "", type: "", address: "", date: "", time: "" };
   const [form, setForm] = useState(empty);
   const [formError, setFormError] = useState(false);
+  const [consent, setConsent] = useState(false);
   const [folioCreated, setFolioCreated] = useState(false);
   const [newFolio, setNewFolio] = useState("");
 
@@ -255,7 +268,7 @@ export function CitaFlow() {
   function submitForm(e: React.FormEvent) {
     e.preventDefault();
     const complete = Object.values(form).every((v) => v.trim() !== "");
-    if (!complete) {
+    if (!complete || !consent) {
       setFormError(true);
       return;
     }
@@ -267,6 +280,7 @@ export function CitaFlow() {
 
   function resetForm() {
     setForm(empty);
+    setConsent(false);
     setFolioCreated(false);
     setNewFolio("");
     setFormError(false);
@@ -414,6 +428,40 @@ export function CitaFlow() {
                   </Field>
                 </div>
 
+                {/* consent checkbox (LFPDPPP) */}
+                <label className="mt-6 flex items-start gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consent}
+                    onChange={(e) => setConsent(e.target.checked)}
+                    className="sr-only"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={[
+                      "mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-[6px] border transition-colors",
+                      consent
+                        ? "bg-veta border-veta"
+                        : "border-[var(--border-default)] bg-transparent",
+                    ].join(" ")}
+                  >
+                    {consent && <Check size={13} color="#0A0A0A" strokeWidth={3} />}
+                  </span>
+                  <span className="text-[13px] font-light leading-[1.6] text-[var(--text-secondary)]">
+                    {t.form.consentPre}
+                    <a
+                      href="/privacidad"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-veta underline underline-offset-2"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {t.form.consentLink}
+                    </a>
+                    {t.form.consentPost}
+                  </span>
+                </label>
+
                 {formError && (
                   <p className="mt-4 text-[13px]" style={{ color: "#FCA5A5" }}>
                     {t.form.error}
@@ -422,17 +470,24 @@ export function CitaFlow() {
 
                 <button
                   type="submit"
+                  disabled={!consent}
                   className={[
-                    "mt-8 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
+                    "mt-6 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
                     "text-[15px] font-medium tracking-wide",
                     "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
-                    "transition-all duration-200 active:scale-[0.96]",
-                    "hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]",
+                    "transition-all duration-200",
+                    consent
+                      ? "active:scale-[0.96] hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                      : "opacity-40 cursor-not-allowed",
                   ].join(" ")}
                 >
                   {t.form.submit}
                   <ArrowRight size={16} />
                 </button>
+
+                <p className="mt-3 text-[12px] text-[var(--text-muted)]">
+                  {t.form.consentNote}
+                </p>
               </form>
             ) : (
               /* confirmation */

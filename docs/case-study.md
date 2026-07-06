@@ -120,7 +120,7 @@ The highest-friction points in the current workflow are quotation and appointmen
 
 **Quote builder** — the team enters measurements and material selection after a site visit. The system calculates the total automatically, applies the current exchange rate, adjusts for zone, and generates a branded PDF ready to send via WhatsApp in under 5 minutes.
 
-**Appointment request form** — a client-facing form capturing name, phone, zone, and project type. On submission, a ticket is created internally and the client receives a WhatsApp confirmation via the existing Meta Cloud API infrastructure.
+**Booking + quote lookup (`/cita`)** — a two-tab client-facing page. Tab one is the appointment form (name, phone with `+52` prefix, email, work type, address, date, time); on submit a ticket is created and a **folio** is generated, and the client receives a WhatsApp confirmation via the existing Meta Cloud API. Tab two is the **quote lookup**: enter the folio to see line items, subtotal, IVA (8%), total, a status badge, and payment options (bank transfer with CLABE, or cash at the workshop). The two tabs connect — after booking, "Ver mi cotización" jumps to the freshly-created folio. *(Front-end shipped on mock data; API wiring and Stripe are the next step.)*
 
 ### Phase 2 — Client portal
 
@@ -167,13 +167,19 @@ The system uses a layered depth model — darker backgrounds recede, lighter sur
 
 | Component | Variants | Status |
 |---|---|---|
-| Button | primary, secondary, ghost, destructive · sm/md/lg · loading/disabled · dark mode | ✅ Code complete |
-| ThemeToggle | sun/moon animation · localStorage persistence | ✅ Code complete |
-| Input | text, select, textarea, phone, date, password, file · floating label · underline style | ✅ Designed |
-| Card | sm/md/lg · hover reveal · image + info below | ✅ Designed |
-| Badge | simple, dot, icon, action, notification · 6 semantic variants | ✅ Designed |
-| Navbar | desktop centered · settings dropdown · EN/ES toggle | ✅ Designed |
-| FloatingBottomNav | pill animation · Book CTA always visible · iOS-native feel | ✅ Designed |
+| Button | `PrimaryBtn` / `SecondaryBtn` · inverse-fill · hover color-inversion · radius 10 | ✅ Code complete |
+| ThemeToggle / ThemeButton | sun/moon animation · shared `useTheme` · fixed #1A1A1A | ✅ Code complete |
+| LangToggle | ES/EN segmented pill · shared `useLang` · inverse active | ✅ Code complete |
+| Input | underline · `+52` phone prefix · select · date (in `/cita`) | ✅ Code complete (inline) |
+| Card | project card · floating chips · StonePlaceholder image slot | ✅ Code complete |
+| Badge | folio status (4 colors) · filter chips · material/type chips | ✅ Code complete (inline) |
+| Navbar + MobileTopBar | desktop centered · single-color logo · pill + theme + CTA | ✅ Code complete |
+| FloatingBottomNav | pill animation · Agendar always highlighted · iOS-native feel | ✅ Code complete |
+
+Shipped on three live pages: `/` (landing), `/proyectos` + `/proyectos/[id]`
+(gallery), `/cita` (booking + quote-by-folio) — all bilingual ES/EN and
+dark/light, deployed on Vercel. Real project photography and the API wiring are
+the remaining gaps (placeholders + local mock data stand in today).
 
 ### Key design decisions
 
@@ -181,9 +187,11 @@ The system uses a layered depth model — darker backgrounds recede, lighter sur
 
 **Floating bottom nav over hamburger** — a floating pill nav with a persistent Book CTA keeps the primary conversion action always one tap away on mobile.
 
-**Settings in a dropdown** — language and theme preferences are power-user features. A gear icon keeps the nav clean for first-time visitors while remaining accessible for returning clients.
+**Inline pill over a settings dropdown** — the original design tucked language + theme behind a gear icon. In build, an inline **ES/EN segmented pill + a fixed theme button** proved clearer: the two controls people actually toggle are one tap away, no menu. The theme button deliberately keeps a constant dark chip (`#1A1A1A`) so it never disappears against either mode. Contact moved to the footer + the WhatsApp card in `/cita`.
 
-**Hover reveal gallery** — the photography is the product. Cards show only the image at rest; metadata appears on hover. The stone work sells itself before any text intervenes.
+**Filterable gallery over a flat grid** — `/proyectos` combines material, color and finish filters (AND-combined, options derived from the data) with a card grid; the photography still leads, but visitors can narrow to their material. Filters live in the URL so a shared link or a back-navigation preserves them.
+
+**Folio as the client key** — instead of accounts, booking a visit mints a **folio** (`COT-…`). With it — and no login — a client looks up their quote (line items, IVA 8%, total, status) and pays. It's the whole client side of quote-to-cash without an auth wall.
 
 ---
 
@@ -194,10 +202,10 @@ The system uses a layered depth model — darker backgrounds recede, lighter sur
 Everything lives under a single domain — `pvane.co`. No separate subdomains for the portal or quoter. Astro handles both static and dynamic routes in the same project.
 
 ```
-pvane.co/              ← static (Astro SSG) — landing, gallery, SEO
-pvane.co/book          ← static + React island — appointment form
-pvane.co/portal/*      ← server rendered (Astro SSR) — client portal
-pvane.co/quote/*       ← server rendered (Astro SSR) — quoter
+pvane.co/              ← static (Astro SSG) — landing, SEO
+pvane.co/proyectos     ← static + React island — gallery + filters
+pvane.co/cita          ← static + React island — booking + quote lookup by folio
+pvane.co/portal/*      ← server rendered (Astro SSR) — client portal (Phase 2)
 
 api.pvane.co           ← NestJS API (already in production)
 ```
@@ -214,8 +222,9 @@ Next.js would have been the safer choice for the portal, but Astro SSR handles t
 |---|---|---|
 | Framework | Astro | SSG + SSR hybrid, View Transitions native, zero JS by default |
 | UI Islands | React | Daily expertise at G-WMS, stronger in remote job market |
-| Components | shadcn/ui | Owned components, no version dependency, adapts to design system |
-| Styling | Tailwind CSS | Utility-first, consistent with shadcn/ui |
+| Components | Custom design system | Hand-built (`components/ui`), no library dependency |
+| Styling | Tailwind CSS v4 | Utility-first, tokens in `@theme` (no config file) |
+| Deploy | Vercel (`@astrojs/vercel`) | Auto-deploy on push to main; static now, SSR-ready |
 | Transitions | Astro View Transitions | Native, no extra libraries, premium feel on gallery navigation |
 | Images | Cloudflare Images | CDN nodes in Tijuana/LA/SD, AVIF + WebP auto-conversion, ~$5/mo |
 | Backend | NestJS + Prisma | Already in production at api.pvane.co |
@@ -228,10 +237,14 @@ Next.js would have been the safer choice for the portal, but Astro SSR handles t
 
 ### Design system
 
-- **Typefaces:** Franchise (display/headings) + Chillax (body/UI)
-- **Palette:** Pure white / black / grays — no accent color, the stone speaks in photos
-- **Tokens:** Defined as Figma local variables, mirrored in Tailwind config
-- **Language:** Bilingual EN/ES — toggle in nav, full content switch
+- **Typefaces:** Franchise (display/headings, Anton fallback) + Chillax (body/UI)
+- **Palette:** Black / white / grays with one accent — **Veta `#9BA8B0`**, a
+  blue-gray pulled from the stone's own veining. An inverse token pair
+  (`--invert-bg`/`--invert-fg`) drives primary actions in both themes.
+- **Tokens:** Defined in `src/styles/global.css` via Tailwind v4 `@theme` +
+  per-mode CSS variables (dark default, `.light` override)
+- **Language:** Bilingual EN/ES — toggle in nav, full content switch, synced
+  across islands via a `localStorage` + CustomEvent bus
 
 ---
 
@@ -285,4 +298,4 @@ Interested in the intersection of software, small business, and the US-Mexico bo
 
 ---
 
-*This case study is documented in real time as the product is built. Last updated: 2025.*
+*This case study is documented in real time as the product is built. Last updated: July 2026 — public site (`/`, `/proyectos`, `/cita`) shipped on Vercel; API wiring, real photography and the client portal are next.*

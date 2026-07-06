@@ -1,0 +1,74 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
+import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Footer } from "../components/ui/Footer";
+
+const sections = [
+  {
+    h: "1. Responsable del tratamiento",
+    p: 'Piedras Vaneco (en adelante "Vaneco"), con domicilio en Tijuana, Baja California, México, es responsable del tratamiento de tus datos personales conforme a la Ley Federal de Protección de Datos Personales en Posesión de los Particulares.',
+  },
+  {
+    h: "2. Datos que recabamos",
+    p: "Al agendar una visita recabamos: nombre completo, teléfono, correo electrónico, domicilio para la visita, tipo de trabajo y fecha y horario preferidos. No recabamos datos personales sensibles.",
+  },
+  {
+    h: "3. Finalidades del tratamiento",
+    p: "Usamos tus datos para: (a) agendar y confirmar la visita a domicilio; (b) generar tu folio y elaborar tu cotización; (c) dar seguimiento a tu proyecto y registrar tu pago; (d) contactarte por WhatsApp, teléfono o correo respecto a tu cita o cotización. No usamos tus datos para finalidades secundarias (publicidad) sin tu consentimiento expreso.",
+  },
+  {
+    h: "4. Transferencias",
+    p: "No compartimos ni vendemos tus datos a terceros, salvo requerimiento de autoridad competente o proveedores necesarios para operar el servicio (p. ej. procesador de pagos), quienes tratan los datos únicamente bajo nuestras instrucciones.",
+  },
+  {
+    h: "5. Derechos ARCO",
+    p: "Puedes ejercer tus derechos de Acceso, Rectificación, Cancelación y Oposición, así como revocar tu consentimiento, escribiendo a contacto@piedrasvaneco.com. Responderemos en los plazos que marca la ley.",
+  },
+  {
+    h: "6. Conservación y seguridad",
+    p: "Conservamos tus datos el tiempo necesario para las finalidades descritas y las obligaciones legales aplicables, con medidas administrativas y técnicas razonables para protegerlos.",
+  },
+  {
+    h: "7. Cambios a este aviso",
+    p: "Cualquier modificación se publicará en vaneco.com/privacidad indicando la fecha de última actualización.",
+  },
+];
+---
+
+<BaseLayout
+  title="Aviso de privacidad | Vaneco"
+  description="Aviso de privacidad de Piedras Vaneco conforme a la LFPDPPP: datos que recabamos al agendar, finalidades, transferencias y derechos ARCO."
+  lang="es"
+>
+  <Navbar currentPath="/privacidad" client:load />
+  <MobileTopBar client:load />
+
+  <main class="pt-15">
+    <article class="mx-auto w-full max-w-[760px] px-5 py-16 md:py-20">
+      <h1 class="mt-6 font-franchise text-[44px] md:text-[64px] leading-[0.95] text-[var(--text-primary)]">
+        AVISO DE PRIVACIDAD
+      </h1>
+      <p class="mt-3 text-[13px] text-[var(--text-muted)]">
+        Última actualización: julio de 2026
+      </p>
+
+      <div class="mt-10 space-y-8">
+        {
+          sections.map((s) => (
+            <section>
+              <h3 class="text-[16px] font-semibold text-[var(--text-primary)]">{s.h}</h3>
+              <p class="mt-2 text-[15px] font-light leading-[1.7] text-[var(--text-secondary)]">
+                {s.p}
+              </p>
+            </section>
+          ))
+        }
+      </div>
+    </article>
+
+    <Footer client:load />
+  </main>
+
+  <FloatingBottomNav currentPath="/privacidad" client:load />
+</BaseLayout>

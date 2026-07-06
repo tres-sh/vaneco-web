@@ -1,0 +1,95 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
+import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Footer } from "../components/ui/Footer";
+import { faqGroups, faqJsonLd } from "../data/faq";
+
+const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
+let idx = 0; // global item index — the very first item is open by default
+---
+
+<BaseLayout
+  title="Preguntas frecuentes — Cubiertas de granito y cuarzo en Tijuana | Vaneco"
+  description="Dudas sobre cubiertas de granito y cuarzo en Tijuana, Rosarito, Tecate y Ensenada: proceso, folio, materiales, pagos e IVA. Resolvemos antes de agendar."
+  lang="es"
+  jsonLd={[faqJsonLd()]}
+>
+  <Navbar currentPath="/faq" client:load />
+  <MobileTopBar client:load />
+
+  <main class="pt-15">
+    <section class={`${SHELL} pt-12 pb-16 md:pt-16 md:pb-24`}>
+      <div class="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-10 lg:gap-20">
+        {/* ===== LEFT (sticky) ===== */}
+        <div class="lg:sticky lg:top-24 lg:self-start">
+          <p class="text-[12px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            Preguntas frecuentes
+          </p>
+          <h1 class="mt-3 font-franchise leading-[0.92] text-[var(--text-primary)] text-[44px] md:text-[88px]">
+            RESOLVEMOS<br />TUS DUDAS.
+          </h1>
+          <p class="mt-5 max-w-[380px] text-[15px] md:text-[16px] font-light leading-relaxed text-[var(--text-secondary)]">
+            Todo sobre cubiertas de granito y cuarzo en Tijuana: proceso, folio,
+            materiales y pagos.
+          </p>
+
+          <div
+            class="mt-8 rounded-xl p-[18px]"
+            style="background: rgba(155,168,176,0.08)"
+          >
+            <p class="text-[14px] font-medium text-[var(--text-primary)]">
+              ¿No encuentras tu respuesta?
+            </p>
+            <p class="mt-1 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+              Escríbenos al <a href="tel:+526648081307" class="text-veta">(664) 808 1307</a>
+              o <a href="/cita" class="text-veta">agenda una visita</a> sin costo.
+            </p>
+          </div>
+        </div>
+
+        {/* ===== RIGHT (accordion) ===== */}
+        <div class="faq">
+          {
+            faqGroups.map((group) => (
+              <div class="mb-10">
+                <h2 class="font-franchise text-[24px] md:text-[26px] uppercase text-veta-dark mb-1">
+                  {group.title}
+                </h2>
+                {group.items.map((item) => {
+                  const open = idx++ === 0;
+                  return (
+                    <details name="faq" open={open} class="border-t border-[var(--border-default)]">
+                      <summary class="flex items-center justify-between gap-4 cursor-pointer list-none py-5">
+                        <span class="text-[17px] font-medium text-[var(--text-primary)]">
+                          {item.q}
+                        </span>
+                        <span class="faq-sign font-franchise text-[22px] leading-none text-veta shrink-0" aria-hidden="true" />
+                      </summary>
+                      <p class="max-w-[640px] pb-6 text-[15px] font-light leading-[1.7] text-[var(--text-secondary)]">
+                        {item.a}
+                      </p>
+                    </details>
+                  );
+                })}
+              </div>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <Footer client:load />
+  </main>
+
+  <FloatingBottomNav currentPath="/faq" client:load />
+</BaseLayout>
+
+<style>
+  /* Hide native disclosure triangle */
+  .faq details > summary { list-style: none; }
+  .faq details > summary::-webkit-details-marker { display: none; }
+  /* Custom +/- sign driven purely by [open] — works without JS */
+  .faq details > summary .faq-sign::before { content: "+"; }
+  .faq details[open] > summary .faq-sign::before { content: "−"; }
+</style>

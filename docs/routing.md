@@ -1,7 +1,14 @@
 # Vaneco — Routing
 
-**Version:** 0.1.0  
-**Last updated:** May 2025
+**Version:** 0.2.0  
+**Last updated:** July 2026
+
+> **Update (July 2026):** The public site's first three pages are implemented —
+> `/` (landing), `/proyectos` + `/proyectos/[id]` (gallery), and `/cita`
+> (booking + quote lookup). Route names are now resolved: **`/proyectos`**
+> (not `/galeria`), **`/cita`** (not `/book`), and the project detail is its
+> own SEO route **`/proyectos/[id]`** (not a modal). Quote consultation is keyed
+> by **folio**, not by a one-time token.
 
 ---
 
@@ -38,18 +45,31 @@ The client portal lives at `pvane.co/portal` — same brand, same domain. The in
 
 ## 2. pvane.co — public site
 
-**Stack:** Astro 6 · React islands · Tailwind v4 · shadcn/ui  
-**Repo:** `tres-sh/vaneco-web`
+**Stack:** Astro 6 · React islands · Tailwind v4 · custom design-system components  
+**Repo:** `tres-sh/vaneco-web`  
+**Adapter:** `@astrojs/vercel` — deploys to Vercel (Build Output API). Pages are
+SSG today; `/cita` flips to SSR once wired to `api.pvane.co`.
 
-### Public routes (SSG)
+### Public routes
 
-| Route | Type | Description |
-|---|---|---|
-| `/` | SSG | Landing — hero, gallery preview, process, CTA |
-| `/work` | SSG | Full project gallery |
-| `/work/[slug]` | SSG | Individual project detail |
-| `/book` | SSG + island | Appointment request form |
-| `/about` | SSG | Vaneco story |
+| Route | Type | Status | Description |
+|---|---|---|---|
+| `/` | SSG | ✅ Built | Landing — hero, stats, project teaser, process, CTA |
+| `/proyectos` | SSG | ✅ Built | Full gallery + material/color/finish filters (island) |
+| `/proyectos/[id]` | SSG | ✅ Built | Individual project detail (own route for SEO/sharing) |
+| `/cita` | SSG + island | ✅ Built | Book a visit (creates folio) + quote lookup by folio |
+| `/about` | SSG | ⏳ Deferred | Vaneco story — not yet designed |
+
+> **Current data source:** the gallery and quote lookup run on **local mock
+> data** (`src/data/projects.ts` and an in-island quote map that accepts
+> `COT-YNG-2606` and any `COT-VNC-####`). They swap to `api.pvane.co` when the
+> tickets/quotes/appointments modules ship. `/cita` becomes SSR at that point
+> (it needs to create folios and read quotes).
+
+> **Bilingual + theme:** every public page is fully ES/EN and dark/light. The
+> language and theme are shared across React islands through `window`
+> CustomEvents + `localStorage` (`vaneco-lang`, `vaneco-theme`) — see
+> `patterns.md` §1.
 
 ### Client portal routes (SSR)
 
@@ -64,28 +84,48 @@ All require a valid JWT token with role `CLIENT` or `ADMIN`. No token → redire
 | `/portal/quotes/[id]` | SSR | CLIENT | View assigned quote |
 | `/portal/quotes/[id]/approve` | SSR | CLIENT | Approve quote + payment |
 
-### Quote by token routes (no login required)
+### Quote lookup by folio (no login required)
 
-The client receives a unique link via WhatsApp with a one-time token. No account needed.
+The **folio** is the client's only key. It is generated when they book a visit
+(`Agendar cita`) and, with it, they consult and pay their quote — no account.
 
-| Route | Type | Auth | Description |
-|---|---|---|---|
-| `/q/[token]` | SSR | URL token | View public quote |
-| `/q/[token]/approve` | SSR | URL token | Approve + pay without login |
+Implemented today as the **second tab of `/cita`** ("Consultar cotización"):
+enter the folio → see line items, subtotal, IVA (8%), total, status badge, and
+payment (transfer/cash). A dedicated shareable route is planned:
+
+| Route | Type | Auth | Status | Description |
+|---|---|---|---|---|
+| `/cita` (tab) | island | folio | ✅ Built | Quote lookup by folio + payment |
+| `/cotizacion/[folio]` | SSR | folio | ⏳ Planned | Optional dedicated shareable page |
 
 ```
 Example:
-pvane.co/q/eyJhbGc... → client views their quote without an account
+pvane.co/cita → "Consultar cotización" → COT-YNG-2606 → quote + payment
+Folios are not guessable; lookup is public but the folio acts as the key.
 ```
+
+### Folio status flow
+
+A folio advances through these statuses (badge colors from the design system):
+
+| Status | Color | Meaning |
+|---|---|---|
+| `Cita agendada` | veta `#9BA8B0` | Visit booked, quote pending |
+| `Pendiente de pago` | warning `#FCD34D` | Quote issued, awaiting payment |
+| `En fabricación` | success `#4ADE80` | Paid (50% deposit), in production |
+| `Cancelada` | danger `#FCA5A5` | Cancelled |
 
 ### SSG route generation
 
 ```ts
-// src/pages/work/[slug].astro
-export async function getStaticPaths() {
-  const projects = await fetch('https://api.pvane.co/v1/projects/public')
-  return projects.map(p => ({ params: { slug: p.slug } }))
+// src/pages/proyectos/[id].astro — currently from local data
+import { projects } from '../../data/projects'
+export function getStaticPaths() {
+  return projects.map((p) => ({ params: { id: p.id }, props: { project: p } }))
 }
+
+// When the API is live, the same shape is fetched instead:
+// const projects = await fetch('https://api.pvane.co/v1/projects/public')
 ```
 
 ---
@@ -209,13 +249,23 @@ POST   /v1/quotes/:id/approve  ← approve quote [CLIENT]
 GET    /v1/quotes/token/:token ← view quote by public token
 ```
 
-#### Appointments
+#### Appointments / Citas
 ```
-POST   /v1/appointments        ← create appointment (public form)
+POST   /v1/appointments        ← create appointment (public /cita form) → returns folio
 GET    /v1/appointments        ← appointment list [ADMIN]
 GET    /v1/appointments/:id    ← appointment detail [ADMIN]
 PATCH  /v1/appointments/:id    ← confirm / cancel [ADMIN]
 ```
+The public `/cita` form calls `POST /v1/appointments`; the response carries the
+generated **folio** (backend-assigned; the prototype mocks `COT-VNC-####`).
+
+#### Cotizaciones (quote lookup by folio)
+```
+GET    /v1/cotizaciones/:folio ← public quote by folio (line items, IVA 8%, total, status)
+```
+Public route — no auth — but the folio is the key and is not guessable. IVA is a
+fixed **8%** (border region); a **50% deposit** moves the folio to
+`En fabricación`.
 
 #### Projects (public gallery)
 ```
@@ -293,7 +343,7 @@ pvane.co/whats
 | Short URL | Destination | Purpose |
 |---|---|---|
 | `pvane.co/whats` | `https://wa.me/526640000000` | Direct WhatsApp |
-| `pvane.co/cotiza` | `piedrasvaneco.com/contacto` | Quote funnel |
+| `pvane.co/cotiza` | `pvane.co/cita` | Quote / booking funnel |
 | `pvane.co/aura` | `piedrasvaneco.com/gallery/calacatta-aura-...` | Specific campaign |
 | `pvane.co/ig` | Vaneco Instagram | Instagram bio |
 | `pvane.co/fb` | Vaneco Facebook | Facebook campaigns |
@@ -342,17 +392,18 @@ model Click {
 6. With token → fetch user data and render
 ```
 
-### pvane.co — quote by token (no login)
+### pvane.co — quote lookup by folio (no login)
 
 ```
-1. Admin generates quote in dashboard
-2. API creates a unique token (cuid) in Quote.publicToken
-3. Admin sends link via WhatsApp: pvane.co/q/[token]
-4. Client opens link → SSR verifies token in DB
-5. Valid token → display quote
-6. Client approves → POST /v1/quotes/token/:token/approve
-7. Token expires or is invalidated after approval
+1. Client books a visit at /cita → API creates ticket + folio (COT-…)
+2. Client receives the folio (on-screen confirmation + WhatsApp)
+3. Client returns to /cita → "Consultar cotización" → enters the folio
+4. SSR reads GET /v1/cotizaciones/:folio → line items, IVA 8%, total, status
+5. Client pays (Stripe transfer/deposit or cash at workshop)
+6. On confirmed payment (50% deposit) the folio → "En fabricación"
 ```
+The folio is the login-less key: public lookup, but the folio itself is not
+guessable (backend-assigned).
 
 ### dashboard.pvane.co — admin
 
@@ -369,36 +420,32 @@ model Click {
 
 ## 7. Folder structure per repo
 
-### vaneco-web (pvane.co)
+### vaneco-web (pvane.co) — as built (July 2026)
 
 ```
 src/
 ├── pages/
-│   ├── index.astro
-│   ├── work/
-│   │   ├── index.astro
-│   │   └── [slug].astro
-│   ├── book.astro
-│   ├── login.astro
-│   ├── q/
-│   │   └── [token].astro     ← public quote by token
-│   ├── [slug].astro          ← short URL redirect
-│   └── portal/
-│       ├── index.astro
-│       ├── orders/
-│       │   └── [id].astro
-│       └── quotes/
-│           └── [id].astro
+│   ├── index.astro            ← landing (SSG)
+│   ├── proyectos/
+│   │   ├── index.astro        ← gallery (SSG)
+│   │   └── [id].astro         ← project detail (SSG, getStaticPaths)
+│   ├── cita.astro             ← booking + quote lookup (SSG + island)
+│   └── (planned) login, portal/*, cotizacion/[folio]
 ├── components/
-│   ├── ui/                   ← design system
-│   ├── sections/             ← Hero, Gallery, Process
-│   └── portal/               ← OrderTimeline, QuoteView
+│   ├── ui/                    ← Navbar + MobileTopBar, FloatingBottomNav,
+│   │                            Button (Primary/Secondary), Footer,
+│   │                            Controls (LangToggle, ThemeButton), ThemeToggle
+│   ├── home/                  ← Home, StonePlaceholder
+│   ├── projects/              ← ProjectGallery, ProjectDetail
+│   └── cita/                  ← CitaFlow
+├── data/
+│   └── projects.ts            ← local mock data + derived filter options
 ├── layouts/
-│   ├── BaseLayout.astro
-│   └── PortalLayout.astro
+│   └── BaseLayout.astro       ← head, fonts, theme flash-guard script
 └── lib/
-    ├── api.ts
-    └── auth.ts
+    ├── useLang.ts             ← shared ES/EN state across islands (events)
+    └── useTheme.ts            ← shared dark/light state across islands
+    └── (planned) api.ts, auth.ts
 ```
 
 ### vaneco-dashboard

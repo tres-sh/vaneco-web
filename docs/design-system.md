@@ -1,8 +1,21 @@
 # Vaneco Design System
 
-**Version:** 0.1.0 — Work in progress  
-**Stack:** Astro + React + Tailwind v4 + shadcn/ui  
-**Last updated:** May 2025
+**Version:** 0.2.0 — In use across `/`, `/proyectos`, `/cita`  
+**Stack:** Astro + React + Tailwind v4 + custom components  
+**Last updated:** July 2026
+
+> **Update (July 2026):** the system is now implemented on three live pages.
+> Notable changes from the original spec, reflected below:
+> - **Logotype is a single color** (`--text-primary`) — the "co" is **never**
+>   tinted veta (earlier drafts colored it; that is now a hard rule).
+> - Navbar drops the settings dropdown in favor of an inline **ES/EN segmented
+>   pill + fixed theme button + CTA**; a compact **MobileTopBar** carries logo +
+>   controls on small screens.
+> - Added the **inverse token pair** `--invert-bg` / `--invert-fg` for primary
+>   buttons, active pills/chips and inverted cards.
+> - Franchise now falls back to **'Anton'** while it loads.
+> - Buttons ship as simple `PrimaryBtn` / `SecondaryBtn` (§2.1); the fuller
+>   CVA multi-variant remains the target API.
 
 ---
 
@@ -51,10 +64,15 @@
 **Tailwind v4 — fonts in global.css:**
 ```css
 @theme {
-  --font-franchise: 'Franchise', 'Arial Black', sans-serif;
+  /* 'Anton' is the loading/fallback face for Franchise (same condensed all-caps feel) */
+  --font-franchise: 'Franchise', 'Anton', 'Arial Black', sans-serif;
   --font-chillax:   'Chillax', 'DM Sans', sans-serif;
 }
 ```
+
+> **Franchise fallback:** Anton is imported alongside Franchise so headings and
+> figures keep their condensed all-caps silhouette before Franchise finishes
+> loading (avoids a layout/serif flash).
 
 Usage in components:
 ```html
@@ -133,6 +151,24 @@ Light: Base (#EFEFEF) → Surface (#FFFFFF) → Elevated (#F5F5F5) → Text (#0A
 | `bg-surface` | `#FFFFFF` | `#141414` | Cards, nav |
 | `bg-elevated` | `#F5F5F5` | `#1F1F1F` | On top of cards |
 | `border-default` | `#E0E0E0` | `#2E2E2E` | General borders |
+| `border-strong` | `#B0B0B0` | `#4A4A4A` | Emphasis borders, hover |
+| `invert-bg` | `#0A0A0A` | `#F5F5F5` | **Inverse fill** — primary buttons, active pills |
+| `invert-fg` | `#F5F5F5` | `#0A0A0A` | **Inverse text** — on top of `invert-bg` |
+
+#### Inverse pair — the "flip" primitive
+
+`--invert-bg` / `--invert-fg` are the opposite of the current mode's
+base/text. They power everything that must read as *the primary action*:
+primary buttons, the active segment of the ES/EN pill, active filter chips, and
+inverted cards. Because they flip with the theme, a primary button is a black
+pill on light mode and a white pill on dark — always maximum contrast. Hover on
+primary/secondary buttons swaps between the inverse fill and an outline (the
+"color inversion on hover" rule), both directions.
+
+```css
+:root  { --invert-bg: #F5F5F5; --invert-fg: #0A0A0A; } /* dark mode */
+.light { --invert-bg: #0A0A0A; --invert-fg: #F5F5F5; }
+```
 
 #### Tailwind v4 — tokens in global.css
 
@@ -224,9 +260,23 @@ export default defineConfig({
 ### 2.1 Button
 
 **File:** `src/components/ui/Button.tsx`  
-**Dependencies:** `class-variance-authority`, `lucide-react`
+**Dependencies:** `lucide-react`
 
-#### Variants
+> **Shipped today:** two link-style components — `PrimaryBtn` (inverse fill,
+> trailing `↗`) and `SecondaryBtn` (outline). Both are radius 10, `active:scale(0.96)`,
+> and invert colors on hover in 200ms. `/cita`'s submit is a matching native
+> `<button>`. The full CVA `Button` API below (variants/sizes/loading) is the
+> target once forms wire to the API and need loading/disabled states.
+
+```tsx
+import { PrimaryBtn, SecondaryBtn } from "@/components/ui/Button"
+
+<PrimaryBtn href="/cita">Agendar visita</PrimaryBtn>          {/* → text + ↗ */}
+<SecondaryBtn href="/proyectos">Ver proyectos</SecondaryBtn>
+<PrimaryBtn href="/cita" full>Quiero algo así</PrimaryBtn>    {/* full-width */}
+```
+
+#### Variants *(target CVA API)*
 
 | Variant | Description | Usage |
 |---|---|---|
@@ -322,13 +372,20 @@ npm install class-variance-authority lucide-react
 **File:** `src/components/ui/ThemeToggle.tsx`  
 **Dependencies:** `lucide-react`
 
-Toggle component for dark/light mode. Persists preference in `localStorage` and respects the system `prefers-color-scheme` on first visit.
+Toggle component for dark/light mode. **Dark is the product default.**
+
+> In the shipped nav, the toggle is the `ThemeButton` from `Controls.tsx`
+> (§2.6). `ThemeToggle.tsx` remains as a standalone design-system component. The
+> `light`/`dark` class on `<html>` and `localStorage` (`vaneco-theme`) are owned
+> by an inline flash-guard script in `BaseLayout.astro`; islands only read the
+> current value and broadcast `vaneco:theme-change` (see `useTheme`).
 
 #### Behavior
 
-- First render → reads `localStorage` → if not found, reads `prefers-color-scheme`
-- On click → toggles `dark` class on `document.documentElement`
-- Saves preference in `localStorage` as `"vaneco-theme"`
+- First paint → inline script in `BaseLayout` sets `dark` unless `vaneco-theme`
+  is explicitly `light` (dark-first product default; no theme flash).
+- On click → dispatches `vaneco:theme-change`; the layout syncs the class + `localStorage`.
+- Islands stay in sync via the shared `useTheme` hook.
 
 #### Visual
 
@@ -354,8 +411,14 @@ import { ThemeToggle } from "@/components/ui/ThemeToggle"
 
 ### 2.3 Input
 
-**File:** `src/components/ui/Input.tsx` *(code pending)*  
 **Style:** Underline — bottom border only, no lateral border
+
+> **Shipped in `/cita`** (`components/cita/CitaFlow.tsx`): underline inputs with
+> an uppercase 11px `--text-muted` label and veta focus border — text, email,
+> `select` (tipo de trabajo, horario), native `date`, and the **`+52` fixed
+> phone prefix**. The folio lookup uses an uppercase, letter-spaced variant. A
+> reusable `Input.tsx` with floating labels + RHF `forwardRef` is still pending;
+> the built fields are plain controlled inputs sharing an `inputCls` string.
 
 #### Available types
 
@@ -392,7 +455,13 @@ All inputs use `#9BA8B0` (Veta) as the focus color — bottom line and label.
 
 ### 2.4 Card
 
-**File:** `src/components/ui/Card.tsx` *(code pending)*
+> **Shipped as the project card** (`components/projects/ProjectGallery.tsx`):
+> clickable `--bg-surface` card, radius 16, image + floating material/type chips,
+> optional "📍 Público" badge, and a footer with title / ft² / `colorName ·
+> finishName`. Until real photography lands, the image slot renders
+> **`StonePlaceholder`** — a marked stone-textured placeholder with the Vaneco
+> watermark and a "demo" tag (`components/home/StonePlaceholder.tsx`). A generic
+> `Card.tsx` primitive is not yet extracted.
 
 #### Anatomy
 
@@ -429,8 +498,15 @@ Use Badge component variants — `badge-material` (Veta) for stone type, `badge-
 
 ### 2.5 Badge / Chip
 
-**File:** `src/components/ui/Badge.tsx` *(code pending)*  
 **Shape:** `border-radius: 10px` — consistent with buttons
+
+> **Shipped in use, not yet a shared component.** The four semantic variants
+> below drive the **folio status badges** in `/cita` (`Cita agendada` = veta,
+> `Pendiente de pago` = warning, `En fabricación` = success, `Cancelada` =
+> danger — with a leading status dot). Chips also appear as the **filter chips**
+> in `/proyectos` (active = inverse pair, color group with a swatch dot) and the
+> **material/type chips** over project images. A single `Badge.tsx` primitive is
+> still pending; the styles live inline in each island (`StatusBadge`, `Chip`).
 
 #### Simple variants
 
@@ -482,49 +558,69 @@ Use Badge component variants — `badge-material` (Veta) for stone type, `badge-
 
 ### 2.6 Navbar
 
-**Files:** `src/components/ui/Navbar.tsx` + `src/components/ui/FloatingBottomNav.tsx` *(code pending)*
+**Files:** `src/components/ui/Navbar.tsx` (exports `Navbar` + `MobileTopBar`) ·
+`src/components/ui/FloatingBottomNav.tsx` · `src/components/ui/Controls.tsx`
+(`LangToggle`, `ThemeButton`) — **✅ code complete.**
 
-#### Desktop layout
+#### Desktop layout (`Navbar`, hidden < md)
 
 ```
-vaneco    Home  Our Work  Process  About    [⚙]  [Book a visit ↗]
+vaneco    Inicio  Proyectos  Proceso        [ES|EN]  [☾]  [Agendar visita ↗]
 ```
 
-- Logo left — Franchise, `span` with Veta color on "co"
-- Links centered — absolute position `left: 50%`
-- Active link — `#9BA8B0` underline with animated `scaleX`
-- Settings icon — dropdown with Language + Theme + contact
-- CTA right — `Book a visit ↗` / `Agendar visita ↗`
-- Scrolled state — `backdrop-filter: blur(12px)` + `background: rgba(10,10,10,0.85)`
+- **Logo left** — Franchise 28px, **single color** `--text-primary`. The "co" is
+  never tinted (hard rule — see the July 2026 note at the top).
+- **Links centered** — `Inicio · Proyectos · Proceso`, absolute `left: 50%`.
+  Active link → `--text-primary` + animated `scaleX` veta underline (2px). The
+  active page is set per-route via a `currentPath` prop.
+- **Right cluster** (gap 12): **ES/EN segmented pill** → **theme button** → CTA.
+- **CTA** — `Agendar visita ↗` / `Book a visit ↗` → `/cita`, inverse-fill, radius 10.
+- **Scrolled state** — `backdrop-filter: blur` + translucent base background.
 
-#### Settings dropdown
+#### ES/EN pill + theme button (`Controls.tsx`)
 
-Lives inside the `⚙` button next to the CTA. Contains:
-- EN/ES Language toggle
-- Dark/Light Theme toggle
-- Direct WhatsApp link
-- Email hola@pvane.co
+- **`LangToggle`** — segmented pill, radius 10. Active segment uses the inverse
+  pair (`--invert-bg`/`--invert-fg`); persists to `localStorage` and broadcasts
+  `vaneco:lang-change` so every island switches copy at once.
+- **`ThemeButton`** — fixed `#1A1A1A` background with a **white** sun/moon icon.
+  It does **not** invert with the theme (deliberate constant), radius 10,
+  spring press. Broadcasts `vaneco:theme-change`.
 
-Principle: configuration for power users, non-invasive for first-time visitors.
+> The earlier `⚙` settings-dropdown (language + theme + WhatsApp/email) is
+> **superseded** by the inline pill + theme button. Contact now lives in the
+> footer and the WhatsApp card in `/cita`.
+
+#### Mobile top bar (`MobileTopBar`, hidden ≥ md)
+
+```
+vaneco                               [ES|EN]  [☾]
+```
+
+Logo + compact `LangToggle` + `ThemeButton` only. No links or CTA — primary
+navigation lives in the floating bottom nav.
 
 #### Mobile — Floating Bottom Nav
 
 ```
-[Home] [Work] [Book] [About] [Settings]
+[Inicio] [Galería] [Agendar] [Contacto] [Ajustes]
 ```
 
-- **Floating** — not full width, centered, `border-radius: 18px`
-- **Blur backdrop** — `backdrop-filter: blur(16px)`
-- **Animated pill** — active item expands with label + spring bounce
-- **Book always visible** — Veta background `rgba(155,168,176,0.12)`, doesn't compete with active
-- **Inactive items** — icon only, no label
-- **Animation** — `cubic-bezier(0.34,1.2,0.64,1)` — native iOS-like bounce
+- **Floating** — not full width, centered, `border-radius: 18px`, ~20px off bottom.
+- **Glass** — `background: rgba(20,20,20,0.85)` + `backdrop-filter: blur(16px)` + 1px `#2E2E2E`.
+- **Animated pill** — active item expands to `[icon] Label` with a max-width transition.
+- **Agendar always highlighted** — veta tint background, veta icon → `/cita`; it
+  sits outside the active-pill system so it never competes with the active item.
+- **Inactive items** — icon only (`#9B9B9B`).
+- **Animation** — `cubic-bezier(0.34,1.2,0.64,1)` — native iOS-like bounce.
+- **Active resolution** — from `currentPath`: `/` → Inicio, `/proyectos` →
+  Galería; on `/cita` no pill is active (the highlighted Agendar carries context).
+- Icons: `lucide-react`, 18px.
 
 #### Active pill behavior
 
 ```
-Inactive: [icon]        ← padding: 8px, no text
-Active:   [icon] Label  ← padding: 8px 12px, text appears with max-width transition
+Inactive: [icon]        ← padding ~10px, no text
+Active:   [icon] Label  ← text appears with a max-width transition, bg #2E2E2E
 ```
 
 ---
@@ -532,10 +628,11 @@ Active:   [icon] Label  ← padding: 8px 12px, text appears with max-width trans
 ## 3. Project Architecture
 
 ```
-pvane.co/              ← Astro SSG — landing, gallery, SEO
-pvane.co/book          ← SSG + React island — appointment form
-pvane.co/portal/*      ← Astro SSR — client portal
-pvane.co/quote/*       ← Astro SSR — quoter
+pvane.co/              ← Astro SSG — landing (hero, stats, teaser, process, CTA)
+pvane.co/proyectos     ← SSG + island — gallery + filters
+pvane.co/proyectos/[id]← SSG — project detail
+pvane.co/cita          ← SSG + island — booking + quote lookup by folio
+pvane.co/portal/*      ← Astro SSR — client portal (Phase 2)
 
 api.pvane.co           ← NestJS API (in production)
 ```
@@ -554,7 +651,7 @@ api.pvane.co           ← NestJS API (in production)
 |---|---|---|
 | Framework | Astro 6 | SSG+SSR hybrid, View Transitions, zero JS default |
 | UI Islands | React 19 | Daily expertise at G-WMS, job market strength |
-| Components | shadcn/ui + custom | Owned components, no version dependency |
+| Components | Custom design system | Owned components (`components/ui`), no library dependency |
 | Styles | Tailwind CSS v4 | Utility-first, tokens in `@theme` |
 | Transitions | Astro View Transitions | Native, premium feel on gallery |
 | Images | Cloudflare Images | CDN in TJ/LA/SD, AVIF+WebP auto |
@@ -598,17 +695,18 @@ api.pvane.co           ← NestJS API (in production)
 
 | Section | Status |
 |---|---|
-| Typography | ✅ Defined |
-| Color System | ✅ Defined |
+| Typography | ✅ Defined (Franchise + Anton fallback) |
+| Color System | ✅ Defined (+ inverse pair `--invert-bg`/`--invert-fg`) |
 | Spacing | ✅ Defined |
 | Border Radius | ✅ Defined |
-| Button | ✅ Complete (v3) — dark mode, inverse hover, radius 10px |
-| ThemeToggle | ✅ Complete |
-| Input / Form fields | ✅ Designed — code pending |
-| Card | ✅ Designed — code pending |
-| Badge / Chip | ✅ Designed — code pending |
-| Navbar desktop | ✅ Designed — code pending |
-| FloatingBottomNav | ✅ Designed — code pending |
+| Button | ✅ Shipped as `PrimaryBtn`/`SecondaryBtn` · CVA multi-variant pending |
+| ThemeToggle / ThemeButton | ✅ Complete (shared `useTheme`) |
+| ES/EN LangToggle | ✅ Complete (shared `useLang`) |
+| Input / Form fields | ✅ Shipped inline in `/cita` · reusable `Input.tsx` pending |
+| Card | ✅ Shipped as project card + `StonePlaceholder` · generic `Card.tsx` pending |
+| Badge / Chip | ✅ Shipped as `StatusBadge` + filter `Chip` · shared `Badge.tsx` pending |
+| Navbar desktop + MobileTopBar | ✅ Code complete |
+| FloatingBottomNav | ✅ Code complete |
 | Modal / Drawer | ⏳ Pending |
 | Toast / Notification | ⏳ Pending |
 

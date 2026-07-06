@@ -1,0 +1,148 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { Navbar, MobileTopBar } from "../components/ui/Navbar";
+import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
+import { Footer } from "../components/ui/Footer";
+import { PrimaryBtn } from "../components/ui/Button";
+import { StonePlaceholder } from "../components/home/StonePlaceholder";
+import { materials, specRows } from "../data/materials";
+
+const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
+
+const itemList = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "Materiales para cubiertas — Vaneco",
+  itemListElement: materials.map((m, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: m.name,
+    description: m.description,
+  })),
+};
+---
+
+<BaseLayout
+  title="Cubiertas de granito, cuarzo y mármol en Tijuana — Guía de materiales | Vaneco"
+  description="Cubiertas de granito, cuarzo, cuarcita, mármol y ónix en Tijuana, Rosarito, Tecate y Ensenada. Conoce cada material y decide con muestras en mano."
+  lang="es"
+  jsonLd={[itemList]}
+>
+  <Navbar currentPath="/materiales" client:load />
+  <MobileTopBar client:load />
+
+  <main class="pt-15">
+    {/* ===== HEADER ===== */}
+    <section class={`${SHELL} pt-12 pb-8 md:pt-16 md:pb-10`}>
+      <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+        <div>
+          <p class="text-[12px] uppercase tracking-[0.16em] text-[var(--text-muted)]">
+            Guía de materiales
+          </p>
+          <h1 class="mt-3 font-franchise leading-[0.92] text-[var(--text-primary)] text-[44px] md:text-[88px]">
+            ELIGE<br />TU PIEDRA.
+          </h1>
+        </div>
+        <p class="max-w-[380px] text-[15px] md:text-[16px] font-light leading-relaxed text-[var(--text-secondary)]">
+          Cubiertas de granito, cuarzo, cuarcita, mármol y ónix en Tijuana,
+          Rosarito, Tecate y Ensenada. Conoce cada material y decide con muestras
+          en mano.
+        </p>
+      </div>
+
+      {/* anchor chips */}
+      <div class="mt-8 flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 md:mx-0 md:px-0">
+        {
+          materials.map((m) => (
+            <a
+              href={`#${m.id}`}
+              class="inline-flex shrink-0 items-center rounded-[10px] border border-[var(--border-default)] px-3.5 py-[7px] text-[13px] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+            >
+              {m.name}
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    {/* ===== MATERIAL SECTIONS ===== */}
+    {
+      materials.map((m) => (
+        <section id={m.id} class={`${SHELL} scroll-mt-24 border-t border-[var(--border-default)]`}>
+          <div class="grid grid-cols-1 lg:grid-cols-[1fr_520px] gap-8 lg:gap-16 py-12 md:py-14">
+            {/* content */}
+            <div>
+              <div class="flex items-center gap-3">
+                <span class="font-franchise text-[20px] leading-none text-veta-dark">
+                  {m.num}
+                </span>
+                <span
+                  class="rounded-[10px] px-2.5 py-1 text-[12px] text-veta"
+                  style="background: rgba(155,168,176,0.12)"
+                >
+                  {m.category}
+                </span>
+              </div>
+
+              <h2 class="mt-3 font-franchise text-[40px] md:text-[56px] leading-[0.95] text-[var(--text-primary)]">
+                {m.name.toUpperCase()}
+              </h2>
+
+              <p class="mt-4 max-w-[560px] text-[16px] font-light leading-[1.7] text-[var(--text-secondary)]">
+                {m.description}
+              </p>
+
+              {/* spec table */}
+              <dl class="mt-6 max-w-[560px]">
+                {specRows.map((row) => (
+                  <div class="grid grid-cols-1 sm:grid-cols-[220px_1fr] gap-1 sm:gap-4 border-t border-[var(--border-default)] py-3">
+                    <dt class="text-[13px] text-[var(--text-muted)]">{row.label}</dt>
+                    <dd class="text-[14px] font-medium text-[var(--text-primary)]">
+                      {m.spec[row.key]}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+
+              <a
+                href={`/proyectos?material=${encodeURIComponent(m.filter)}`}
+                class="mt-6 inline-flex items-center gap-1.5 text-[14px] text-veta hover:gap-2.5 transition-all"
+              >
+                Ver proyectos en {m.name.toLowerCase()} →
+              </a>
+            </div>
+
+            {/* photo */}
+            <div class="lg:order-last">
+              <StonePlaceholder className="h-[280px] lg:h-[460px] rounded-2xl">
+                <span class="absolute inset-0 z-10 grid place-items-center px-6 text-center text-[13px] text-white/45">
+                  Foto — {m.alt.toLowerCase()}
+                </span>
+              </StonePlaceholder>
+            </div>
+          </div>
+        </section>
+      ))
+    }
+
+    {/* ===== FINAL CTA ===== */}
+    <section class={`${SHELL} py-14 md:py-20`}>
+      <div class="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-6 py-12 md:px-8 md:py-20 text-center">
+        <h2 class="font-franchise text-[36px] md:text-[72px] leading-[0.95] text-[var(--text-primary)]">
+          ¿NO SABES CUÁL ELEGIR?
+        </h2>
+        <p class="mx-auto mt-4 max-w-[520px] text-[15px] md:text-[16px] text-[var(--text-secondary)]">
+          Agenda una visita gratis: llevamos muestras físicas a tu domicilio y
+          decidimos sobre tu cocina.
+        </p>
+        <div class="mt-7 flex justify-center">
+          <PrimaryBtn href="/cita">Agendar visita</PrimaryBtn>
+        </div>
+      </div>
+    </section>
+
+    <Footer client:load />
+  </main>
+
+  <FloatingBottomNav currentPath="/materiales" client:load />
+</BaseLayout>
