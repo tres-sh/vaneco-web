@@ -3,7 +3,6 @@ import { MapPin } from "lucide-react";
 import { useLang } from "../../lib/useLang";
 import { StonePlaceholder } from "../home/StonePlaceholder";
 import {
-  projects,
   materialOptions,
   colorOptions,
   finishOptions,
@@ -26,6 +25,7 @@ const ui = {
     count: (n: number) => `${n} ${n === 1 ? "proyecto" : "proyectos"}`,
     clear: "Limpiar filtros",
     empty: "Ningún proyecto coincide con esos filtros.",
+    emptyCatalog: "Pronto publicaremos nuestros proyectos aquí.",
     public: "Público",
   },
   en: {
@@ -37,6 +37,7 @@ const ui = {
     count: (n: number) => `${n} ${n === 1 ? "project" : "projects"}`,
     clear: "Clear filters",
     empty: "No project matches those filters.",
+    emptyCatalog: "We'll publish our projects here soon.",
     public: "Public",
   },
 } as const;
@@ -87,50 +88,73 @@ function Chip({
 // CARD
 // =====================
 function ProjectCard({ p, publicLabel }: { p: Proyecto; publicLabel: string }) {
-  return (
-    <a
-      href={`/proyectos/${p.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] transition-colors duration-200 hover:border-[var(--border-strong)]"
-    >
-      <StonePlaceholder
-        className="h-[240px] md:h-[300px]"
-        label={p.colorName.toUpperCase()}
-        material={p.material.toLowerCase()}
-      >
-        {/* material + type chips */}
-        <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+  const meta = [p.colorName, p.finishName].filter(Boolean).join(" · ");
+  const overlay = (
+    <>
+      {/* material + type chips */}
+      <div className="absolute top-3 left-3 z-10 flex flex-wrap gap-2">
+        {p.material && (
           <span
             className="rounded-[10px] px-2.5 py-1 text-[12px] backdrop-blur-md"
             style={{ background: "rgba(155,168,176,0.18)", color: "#DCE3E7" }}
           >
             {p.material}
           </span>
+        )}
+        {p.type && (
           <span
             className="rounded-[10px] px-2.5 py-1 text-[12px] text-[#9B9B9B] backdrop-blur-md"
             style={{ background: "rgba(10,10,10,0.6)" }}
           >
             {p.type}
           </span>
-        </div>
-        {/* public badge */}
-        {p.isPublic && (
-          <span
-            className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-white/90 backdrop-blur-md"
-            style={{ background: "rgba(10,10,10,0.6)" }}
-          >
-            <MapPin size={11} /> {publicLabel}
-          </span>
         )}
-      </StonePlaceholder>
+      </div>
+      {/* public badge */}
+      {p.isPublic && (
+        <span
+          className="absolute top-3 right-3 z-10 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] text-white/90 backdrop-blur-md"
+          style={{ background: "rgba(10,10,10,0.6)" }}
+        >
+          <MapPin size={11} /> {publicLabel}
+        </span>
+      )}
+    </>
+  );
+
+  return (
+    <a
+      href={`/proyectos/${p.id}`}
+      className="group flex flex-col overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] transition-colors duration-200 hover:border-[var(--border-strong)]"
+    >
+      {p.img ? (
+        <div className="relative h-[240px] md:h-[300px] overflow-hidden">
+          <img
+            src={p.img}
+            alt={p.title}
+            loading="lazy"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+          />
+          {overlay}
+        </div>
+      ) : (
+        <StonePlaceholder
+          className="h-[240px] md:h-[300px]"
+          label={p.colorName.toUpperCase()}
+          material={p.material.toLowerCase()}
+        >
+          {overlay}
+        </StonePlaceholder>
+      )}
 
       <div className="p-4">
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">{p.title}</h3>
-          <span className="shrink-0 text-[13px] text-[var(--text-muted)]">{p.sqft}</span>
+          {p.sqft && (
+            <span className="shrink-0 text-[13px] text-[var(--text-muted)]">{p.sqft}</span>
+          )}
         </div>
-        <p className="mt-1 text-[13px] text-[var(--text-secondary)]">
-          {p.colorName} · {p.finishName}
-        </p>
+        {meta && <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{meta}</p>}
       </div>
     </a>
   );
@@ -139,7 +163,7 @@ function ProjectCard({ p, publicLabel }: { p: Proyecto; publicLabel: string }) {
 // =====================
 // GALLERY
 // =====================
-export function ProjectGallery() {
+export function ProjectGallery({ projects }: { projects: Proyecto[] }) {
   const [lang] = useLang("es");
   const t = ui[lang];
   const [f, setF] = useState<FilterState>({ material: ALL, color: ALL, finish: ALL });
@@ -168,7 +192,7 @@ export function ProjectGallery() {
           (f.color === ALL || p.color === f.color) &&
           (f.finish === ALL || p.finish === f.finish),
       ),
-    [f],
+    [f, projects],
   );
 
   const set = (key: keyof FilterState, val: string) =>
@@ -259,7 +283,7 @@ export function ProjectGallery() {
       <section className={`${SHELL} pb-20 md:pb-28`}>
         {filtered.length === 0 ? (
           <div className="py-24 text-center text-[15px] text-[var(--text-secondary)]">
-            {t.empty}
+            {projects.length === 0 ? t.emptyCatalog : t.empty}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

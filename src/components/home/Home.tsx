@@ -3,6 +3,7 @@ import { useLang } from "../../lib/useLang";
 import { StonePlaceholder } from "./StonePlaceholder";
 import { PrimaryBtn, SecondaryBtn } from "../ui/Button";
 import { Footer } from "../ui/Footer";
+import type { Proyecto } from "../../data/projects";
 
 // =====================
 // COPY (ES / EN)
@@ -153,7 +154,7 @@ const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 // =====================
 // HOME
 // =====================
-export function Home() {
+export function Home({ featured = [] }: { featured?: Proyecto[] }) {
   const [lang] = useLang("es");
   const c = copy[lang];
 
@@ -240,40 +241,12 @@ export function Home() {
         </div>
       </section>
 
-      {/* ============ PROJECTS (teaser) ============ */}
+      {/* ============ FEATURED PROJECTS (carousel) ============ */}
       <section className={`${SHELL} py-14 md:py-24`}>
-        {/* mobile header */}
-        <div className="flex items-end justify-between md:hidden mb-5">
-          <h2 className="font-franchise text-[32px] leading-none text-[var(--text-primary)]">
-            {c.projects.heading.join(" ")}
-          </h2>
-          <a
-            href="/proyectos"
-            className="inline-flex items-center gap-1 text-[13px] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-          >
-            {lang === "es" ? "Ver todos" : "See all"} <ArrowRight size={13} />
-          </a>
-        </div>
-
-        {/* mobile: horizontal carousel */}
-        <div className="md:hidden -mx-5 px-5 flex gap-4 overflow-x-auto no-scrollbar snap-x snap-mandatory">
-          {c.projects.items.map((p) => (
-            <StonePlaceholder
-              key={p.name}
-              className="snap-start shrink-0 w-[240px] h-[220px] rounded-[14px]"
-            >
-              <span className="absolute bottom-3 left-3 z-10 rounded-[10px] bg-black/70 px-2.5 py-1.5 text-[12px] text-white backdrop-blur-md">
-                {p.name}
-              </span>
-            </StonePlaceholder>
-          ))}
-        </div>
-
-        {/* desktop: 3 equal columns */}
-        <div className="hidden md:grid grid-cols-3 gap-6">
-          {/* card */}
-          <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-8 flex flex-col">
-            <h2 className="font-franchise text-[44px] leading-[0.95] text-[var(--text-primary)]">
+        <div className="flex gap-4 md:gap-6 overflow-x-auto no-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
+          {/* intro card */}
+          <div className="snap-start shrink-0 w-[280px] md:w-[360px] rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-7 md:p-8 flex flex-col">
+            <h2 className="font-franchise text-[36px] md:text-[44px] leading-[0.95] text-[var(--text-primary)]">
               {c.projects.heading[0]}
               <br />
               {c.projects.heading[1]}
@@ -289,19 +262,32 @@ export function Home() {
             <p className="mt-3 text-[12px] text-[var(--text-muted)]">{c.projects.url}</p>
           </div>
 
-          {/* two photos */}
-          {c.projects.items.map((p) => (
-            <StonePlaceholder
-              key={p.name}
-              className="h-[340px] rounded-2xl"
-              label={p.name.toUpperCase()}
-              material={p.material.toLowerCase()}
-            >
-              <span className="absolute bottom-3 left-3 z-10 rounded-[10px] bg-black/70 px-3 py-1.5 text-[13px] text-white backdrop-blur-md">
-                {p.name} · {p.material}
-              </span>
-            </StonePlaceholder>
-          ))}
+          {/* featured project cards (from the backend) */}
+          {featured.map((p) => {
+            const caption = [p.title, p.material].filter(Boolean).join(" · ");
+            return (
+              <a
+                key={p.id}
+                href={`/proyectos/${p.id}`}
+                className="group snap-start shrink-0 relative w-[280px] md:w-[380px] h-[300px] md:h-[400px] rounded-2xl overflow-hidden border border-[var(--border-default)]"
+              >
+                {p.img ? (
+                  <img
+                    src={p.img}
+                    alt={p.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                  />
+                ) : (
+                  <StonePlaceholder className="h-full w-full" />
+                )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                <span className="absolute bottom-3 left-3 z-10 rounded-[10px] bg-black/70 px-3 py-1.5 text-[13px] text-white backdrop-blur-md">
+                  {caption}
+                </span>
+              </a>
+            );
+          })}
         </div>
       </section>
 

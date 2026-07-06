@@ -4,9 +4,10 @@ import { Navbar, MobileTopBar } from "../../components/ui/Navbar";
 import { FloatingBottomNav } from "../../components/ui/FloatingBottomNav";
 import { Footer } from "../../components/ui/Footer";
 import { ProjectDetail } from "../../components/projects/ProjectDetail";
-import { projects } from "../../data/projects";
+import { getPublishedProjects } from "../../lib/api";
 
-export function getStaticPaths() {
+export async function getStaticPaths() {
+  const projects = await getPublishedProjects();
   return projects.map((p) => ({ params: { id: p.id }, props: { project: p } }));
 }
 

@@ -3,6 +3,9 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { Navbar, MobileTopBar } from "../components/ui/Navbar";
 import { FloatingBottomNav } from "../components/ui/FloatingBottomNav";
 import { Home } from "../components/home/Home";
+import { getFeaturedProjects } from "../lib/api";
+
+const featured = await getFeaturedProjects();
 ---
 
 <BaseLayout
@@ -13,7 +16,7 @@ import { Home } from "../components/home/Home";
   <Navbar currentPath="/" client:load />
   <MobileTopBar client:load />
   <main>
-    <Home client:load />
+    <Home featured={featured} client:load />
   </main>
   <FloatingBottomNav currentPath="/" client:load />
 </BaseLayout>

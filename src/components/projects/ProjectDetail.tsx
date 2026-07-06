@@ -47,6 +47,8 @@ export function ProjectDetail({ project: p }: { project: Proyecto }) {
   const [lang] = useLang("es");
   const t = ui[lang];
   const images = p.images ?? [];
+  const moreImages = images.slice(1); // images[0] is the hero
+  const chips = [p.material, p.type, p.finishName].filter(Boolean);
 
   return (
     <div className="pt-15">
@@ -66,23 +68,35 @@ export function ProjectDetail({ project: p }: { project: Proyecto }) {
         </div>
 
         {/* main image */}
-        <StonePlaceholder
-          className="h-[300px] md:h-[460px] rounded-2xl"
-          label={p.colorName.toUpperCase()}
-          material={p.material.toLowerCase()}
-        >
-          <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2">
-            {[p.material, p.type, p.finishName].map((chip) => (
-              <span
-                key={chip}
-                className="rounded-[10px] px-3 py-1.5 text-[12px] text-white backdrop-blur-md"
-                style={{ background: "rgba(10,10,10,0.7)" }}
-              >
-                {chip}
-              </span>
-            ))}
-          </div>
-        </StonePlaceholder>
+        {(() => {
+          const chipsOverlay = (
+            <div className="absolute bottom-3 left-3 z-10 flex flex-wrap gap-2">
+              {chips.map((chip) => (
+                <span
+                  key={chip}
+                  className="rounded-[10px] px-3 py-1.5 text-[12px] text-white backdrop-blur-md"
+                  style={{ background: "rgba(10,10,10,0.7)" }}
+                >
+                  {chip}
+                </span>
+              ))}
+            </div>
+          );
+          return p.img ? (
+            <div className="relative h-[300px] md:h-[460px] overflow-hidden rounded-2xl">
+              <img src={p.img} alt={p.title} className="h-full w-full object-cover" />
+              {chipsOverlay}
+            </div>
+          ) : (
+            <StonePlaceholder
+              className="h-[300px] md:h-[460px] rounded-2xl"
+              label={p.colorName.toUpperCase()}
+              material={p.material.toLowerCase()}
+            >
+              {chipsOverlay}
+            </StonePlaceholder>
+          );
+        })()}
 
         {/* title + description + specs */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 lg:gap-12">
@@ -145,7 +159,9 @@ export function ProjectDetail({ project: p }: { project: Proyecto }) {
                 [t.specs.finish, p.finishName],
                 [t.specs.sqft, p.sqft],
                 [t.specs.type, p.type],
-              ].map(([label, value], i) => (
+              ]
+                .filter(([, value]) => Boolean(value))
+                .map(([label, value], i) => (
                 <div
                   key={label}
                   className={[
@@ -169,23 +185,30 @@ export function ProjectDetail({ project: p }: { project: Proyecto }) {
         </div>
 
         {/* more images */}
-        {images.length > 0 && (
+        {moreImages.length > 0 && (
           <div className="mt-14">
             <h2 className="font-franchise text-[24px] md:text-[28px] text-[var(--text-primary)] mb-5">
               {t.more}
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              {images.map((_, i) => (
-                <StonePlaceholder
-                  key={i}
+              {moreImages.map((src, i) => (
+                <div
+                  key={src}
                   className={[
-                    "h-[220px] md:h-[280px] rounded-[14px]",
+                    "h-[220px] md:h-[280px] overflow-hidden rounded-[14px]",
                     // last one spans full width when the count is odd
-                    i === images.length - 1 && images.length % 2 === 1 ? "col-span-2" : "",
+                    i === moreImages.length - 1 && moreImages.length % 2 === 1
+                      ? "col-span-2"
+                      : "",
                   ].join(" ")}
-                  label={p.colorName.toUpperCase()}
-                  material={p.material.toLowerCase()}
-                />
+                >
+                  <img
+                    src={src}
+                    alt={`${p.title} — ${i + 2}`}
+                    loading="lazy"
+                    className="h-full w-full object-cover"
+                  />
+                </div>
               ))}
             </div>
           </div>

@@ -4,6 +4,9 @@ import { Navbar, MobileTopBar } from "../../components/ui/Navbar";
 import { FloatingBottomNav } from "../../components/ui/FloatingBottomNav";
 import { ProjectGallery } from "../../components/projects/ProjectGallery";
 import { Footer } from "../../components/ui/Footer";
+import { getPublishedProjects } from "../../lib/api";
+
+const projects = await getPublishedProjects();
 ---
 
 <BaseLayout
@@ -14,7 +17,7 @@ import { Footer } from "../../components/ui/Footer";
   <Navbar currentPath="/proyectos" client:load />
   <MobileTopBar client:load />
   <main>
-    <ProjectGallery client:load />
+    <ProjectGallery projects={projects} client:load />
     <Footer client:load />
   </main>
   <FloatingBottomNav currentPath="/proyectos" client:load />
