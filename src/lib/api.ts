@@ -119,11 +119,13 @@ export interface CitaLeadInput {
   address: string;
   date: string;
   time: string;
+  referralSource?: string;
 }
 
+// El folio se genera y se guarda internamente, pero todavía no se expone
+// al cliente — solo confirmamos que el lead se creó.
 export interface CitaLeadResult {
   id: string;
-  folio: string;
 }
 
 export async function createCitaLead(input: CitaLeadInput): Promise<CitaLeadResult> {

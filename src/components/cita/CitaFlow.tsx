@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Check, ArrowRight, Copy, MessageCircle } from "lucide-react";
+import { Check, ArrowRight, ArrowUpRight, Copy, MessageCircle, Loader2 } from "lucide-react";
 import { useLang } from "../../lib/useLang";
 import { PrimaryBtn } from "../ui/Button";
 import { createCitaLead } from "../../lib/api";
@@ -7,6 +7,12 @@ import { createCitaLead } from "../../lib/api";
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 type Tab = "schedule" | "lookup";
 type StatusKey = "scheduled" | "pending" | "fabricating" | "cancelled";
+
+// MVP: la consulta de cotización por folio todavía no está lista para el
+// cliente (el folio es interno por ahora). El código queda listo para
+// reactivarla más adelante.
+const SHOW_LOOKUP_TAB = false;
+const VISIBLE_TABS: Tab[] = SHOW_LOOKUP_TAB ? ["schedule", "lookup"] : ["schedule"];
 
 // =====================
 // MOCK QUOTE DATA (prototype — real data comes from api.pvane.co)
@@ -54,7 +60,9 @@ const copy = {
     tabs: { schedule: "Agendar cita", lookup: "Consultar cotización" },
     form: {
       title: ["AGENDA", "TU VISITA"],
-      sub: "Vamos a tu domicilio, sin costo y sin compromiso. Llevamos muestras. Al enviar se crea tu folio.",
+      badge: "Visita gratis · Sin compromiso",
+      photoAlt: "Cocina con cubierta de cuarzo instalada por Vaneco",
+      sub: "Déjanos tus datos y agendamos la visita a tu domicilio. Te contactaremos por WhatsApp para confirmar los detalles.",
       name: "Nombre completo",
       phone: "Teléfono",
       email: "Correo",
@@ -64,23 +72,24 @@ const copy = {
       date: "Fecha preferida",
       time: "Horario",
       timeOptions: ["Mañana", "Tarde"],
-      submit: "Agendar y generar folio",
+      source: "¿Cómo nos encontraste? (opcional)",
+      sourceOptions: ["Google", "Facebook", "Instagram", "Recomendación", "Otro"],
+      submit: "Agendar visita",
       submitting: "Agendando…",
       error: "Completa todos los campos para continuar.",
       apiError: "No pudimos agendar tu cita. Intenta de nuevo o escríbenos por WhatsApp.",
       placeholderType: "Selecciona…",
+      placeholderSource: "Selecciona (opcional)",
       consentPre: "He leído y acepto el ",
       consentLink: "Aviso de Privacidad",
       consentPost:
-        " y autorizo a Piedras Vaneco el uso de mis datos para agendar la visita, generar mi folio y dar seguimiento a mi cotización.",
+        " y autorizo a Piedras Vaneco el uso de mis datos para agendar la visita y dar seguimiento a mi solicitud.",
       consentNote:
         "El botón se habilita al aceptar. Tus datos nunca se comparten con terceros.",
     },
     confirm: {
       title: ["CITA", "AGENDADA"],
-      body: "Te contactaremos para confirmar. Guarda tu folio para consultar y pagar tu cotización.",
-      folioLabel: "Tu folio",
-      viewQuote: "Ver mi cotización",
+      body: "Te contactaremos por WhatsApp muy pronto para confirmar los detalles de tu visita.",
       another: "Agendar otra",
     },
     expect: {
@@ -88,7 +97,7 @@ const copy = {
       steps: [
         "Confirmamos tu cita por WhatsApp.",
         "Medimos y elegimos material con muestras en tu domicilio.",
-        "Recibes tu cotización ligada al folio.",
+        "Recibes tu cotización personalizada.",
       ],
       note: "¿Ya tienes folio? Consúltalo en la pestaña de arriba.",
     },
@@ -128,7 +137,9 @@ const copy = {
     tabs: { schedule: "Book a visit", lookup: "Check your quote" },
     form: {
       title: ["BOOK", "YOUR VISIT"],
-      sub: "We come to your home, free and with no commitment. We bring samples. Submitting creates your folio.",
+      badge: "Free visit · No commitment",
+      photoAlt: "Kitchen with a quartz countertop installed by Vaneco",
+      sub: "Leave us your info and we'll book the visit to your home. We'll reach out via WhatsApp to confirm the details.",
       name: "Full name",
       phone: "Phone",
       email: "Email",
@@ -138,23 +149,24 @@ const copy = {
       date: "Preferred date",
       time: "Time",
       timeOptions: ["Morning", "Afternoon"],
-      submit: "Book and generate folio",
+      source: "How did you find us? (optional)",
+      sourceOptions: ["Google", "Facebook", "Instagram", "Referral", "Other"],
+      submit: "Book visit",
       submitting: "Booking…",
       error: "Fill in every field to continue.",
       apiError: "We couldn't book your visit. Please try again or message us on WhatsApp.",
       placeholderType: "Select…",
+      placeholderSource: "Select (optional)",
       consentPre: "I have read and accept the ",
       consentLink: "Privacy Notice",
       consentPost:
-        " and authorize Piedras Vaneco to use my data to book the visit, generate my folio and follow up on my quote.",
+        " and authorize Piedras Vaneco to use my data to book the visit and follow up on my request.",
       consentNote:
         "The button enables once you accept. Your data is never shared with third parties.",
     },
     confirm: {
       title: ["VISIT", "BOOKED"],
-      body: "We'll reach out to confirm. Keep your folio to check and pay your quote.",
-      folioLabel: "Your folio",
-      viewQuote: "View my quote",
+      body: "We'll reach out via WhatsApp shortly to confirm the details of your visit.",
       another: "Book another",
     },
     expect: {
@@ -162,7 +174,7 @@ const copy = {
       steps: [
         "We confirm your appointment via WhatsApp.",
         "We measure and pick material with samples at your home.",
-        "You receive your quote linked to the folio.",
+        "You receive your personalized quote.",
       ],
       note: "Already have a folio? Check it in the tab above.",
     },
@@ -234,7 +246,7 @@ function Field({
 }) {
   return (
     <label className={`flex flex-col gap-1.5 ${span2 ? "sm:col-span-2" : ""}`}>
-      <span className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
+      <span className="text-[11px] font-medium uppercase tracking-[1.5px] text-[var(--text-muted)]">
         {label}
       </span>
       {children}
@@ -243,7 +255,7 @@ function Field({
 }
 
 const inputCls =
-  "w-full bg-transparent border-b border-[var(--border-default)] py-2 text-[15px] text-[var(--text-primary)] outline-none transition-colors duration-200 focus:border-veta placeholder:text-[var(--text-muted)]";
+  "w-full bg-transparent border-b-[1.5px] border-[var(--border-default)] py-2 text-[16px] md:text-[17px] text-[var(--text-primary)] outline-none transition-colors duration-200 focus:border-veta placeholder:text-[var(--text-muted)]";
 
 // =====================
 // CITA FLOW
@@ -255,14 +267,23 @@ export function CitaFlow() {
   const [tab, setTab] = useState<Tab>("schedule");
 
   // schedule
-  const empty = { name: "", phone: "", email: "", type: "", address: "", date: "", time: "" };
+  const empty = {
+    name: "",
+    phone: "",
+    email: "",
+    type: "",
+    address: "",
+    date: "",
+    time: "",
+    source: "",
+  };
+  const REQUIRED_FIELDS = ["name", "phone", "email", "type", "address", "date", "time"] as const;
   const [form, setForm] = useState(empty);
   const [formError, setFormError] = useState(false);
   const [apiError, setApiError] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [consent, setConsent] = useState(false);
-  const [folioCreated, setFolioCreated] = useState(false);
-  const [newFolio, setNewFolio] = useState("");
+  const [submitted, setSubmitted] = useState(false);
 
   // lookup
   const [lookupValue, setLookupValue] = useState("");
@@ -274,7 +295,7 @@ export function CitaFlow() {
 
   async function submitForm(e: React.FormEvent) {
     e.preventDefault();
-    const complete = Object.values(form).every((v) => v.trim() !== "");
+    const complete = REQUIRED_FIELDS.every((k) => form[k].trim() !== "");
     if (!complete || !consent) {
       setFormError(true);
       return;
@@ -283,7 +304,7 @@ export function CitaFlow() {
     setApiError(false);
     setSubmitting(true);
     try {
-      const lead = await createCitaLead({
+      await createCitaLead({
         name: form.name,
         phone: `+52${form.phone}`,
         email: form.email,
@@ -291,9 +312,9 @@ export function CitaFlow() {
         address: form.address,
         date: form.date,
         time: form.time,
+        referralSource: form.source || undefined,
       });
-      setNewFolio(lead.folio);
-      setFolioCreated(true);
+      setSubmitted(true);
     } catch {
       setApiError(true);
     } finally {
@@ -304,17 +325,9 @@ export function CitaFlow() {
   function resetForm() {
     setForm(empty);
     setConsent(false);
-    setFolioCreated(false);
-    setNewFolio("");
+    setSubmitted(false);
     setFormError(false);
     setApiError(false);
-  }
-
-  function viewNewQuote() {
-    setTab("lookup");
-    setLookupValue(newFolio);
-    setQuote({ kind: "pending", folio: newFolio, status: "scheduled" });
-    setLookupError(false);
   }
 
   function doLookup(e: React.FormEvent) {
@@ -343,40 +356,87 @@ export function CitaFlow() {
     <div className="pt-15">
       <section className={`${SHELL} py-10 md:py-16`}>
         {/* ===== TABS ===== */}
-        <div className="flex w-full sm:inline-flex sm:w-auto gap-1.5 rounded-[12px] border border-[var(--border-default)] p-1 mb-10">
-          {(["schedule", "lookup"] as Tab[]).map((k) => (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setTab(k)}
-              className={[
-                "flex-1 sm:flex-none rounded-[10px] px-4 py-2 text-[14px] font-medium transition-all duration-200",
-                tab === k
-                  ? "bg-[var(--invert-bg)] text-[var(--invert-fg)]"
-                  : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
-              ].join(" ")}
-            >
-              {t.tabs[k]}
-            </button>
-          ))}
-        </div>
+        {VISIBLE_TABS.length > 1 && (
+          <div className="flex w-full sm:inline-flex sm:w-auto gap-1.5 rounded-[12px] border border-[var(--border-default)] p-1 mb-10">
+            {VISIBLE_TABS.map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setTab(k)}
+                className={[
+                  "flex-1 sm:flex-none rounded-[10px] px-4 py-2 text-[14px] font-medium transition-all duration-200",
+                  tab === k
+                    ? "bg-[var(--invert-bg)] text-[var(--invert-fg)]"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]",
+                ].join(" ")}
+              >
+                {t.tabs[k]}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* ===== SCHEDULE TAB ===== */}
         {tab === "schedule" && (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 lg:gap-14 items-start">
-            {/* left: form OR confirmation */}
-            {!folioCreated ? (
-              <form onSubmit={submitForm}>
-                <h1 className="font-franchise text-[48px] md:text-[72px] leading-[0.95] text-[var(--text-primary)]">
+          <div className="rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-base)] overflow-hidden grid grid-cols-1 md:grid-cols-[0.92fr_1.08fr]">
+            {/* left: photo panel — badge, gradient title, steps. Static regardless of form state.
+                Explicit height (not min-height) so the absolutely-positioned photo/gradient
+                resolve their percentage sizing reliably instead of against an auto-grown box. */}
+            <div className="relative h-[560px] md:h-[660px] bg-[#0A0A0A]">
+              <img
+                src="/images/cocina-cuarzo.jpg"
+                alt={t.form.photoAlt}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.05) 30%, rgba(10,10,10,0.45) 50%, rgba(10,10,10,0.9) 66%, #0A0A0A 82%)",
+                }}
+              />
+              <div className="absolute top-7 left-7 inline-flex items-center gap-2 rounded-full bg-[rgba(10,10,10,0.5)] backdrop-blur-[6px] px-3.5 py-2 text-[12px] uppercase tracking-wide text-white">
+                <span className="h-1.5 w-1.5 rounded-full bg-veta" />
+                {t.form.badge}
+              </div>
+
+              <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-4 md:gap-[22px] px-6 pb-6 md:px-9 md:pb-[34px]">
+                <h1
+                  className="font-franchise uppercase leading-[0.88] text-[40px] md:text-[66px]"
+                  style={{
+                    backgroundImage: "linear-gradient(180deg,#FFFFFF 0%,#DCE3E7 42%,#9BA8B0 100%)",
+                    WebkitBackgroundClip: "text",
+                    backgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
+                >
                   {t.form.title[0]}
                   <br />
                   {t.form.title[1]}
                 </h1>
-                <p className="mt-4 max-w-[520px] text-[15px] md:text-[16px] text-[var(--text-secondary)]">
+                <div className="flex flex-col gap-2.5">
+                  {t.expect.steps.map((s, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-3 rounded-xl border border-white/12 bg-[rgba(31,31,31,0.6)] backdrop-blur-[8px] px-4 py-3.5"
+                    >
+                      <span className="font-franchise text-[18px] leading-none text-veta">0{i + 1}</span>
+                      <p className="text-[14px] font-light text-white">{s}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* right: form OR confirmation */}
+            <div className="flex flex-col gap-5 md:gap-[26px] p-6 md:pt-12 md:px-16 md:pb-11">
+            {!submitted ? (
+              <form onSubmit={submitForm} className="flex flex-col gap-5 md:gap-[26px]">
+                <p className="max-w-[460px] text-[15px] md:text-[16px] font-light text-[var(--text-secondary)]">
                   {t.form.sub}
                 </p>
 
-                <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
                   <Field label={t.form.name}>
                     <input
                       className={inputCls}
@@ -385,10 +445,10 @@ export function CitaFlow() {
                     />
                   </Field>
                   <Field label={t.form.phone}>
-                    <div className="flex items-center gap-2 border-b border-[var(--border-default)] focus-within:border-veta transition-colors">
-                      <span className="text-[15px] text-[var(--text-muted)]">+52</span>
+                    <div className="flex items-center gap-2 border-b-[1.5px] border-[var(--border-default)] focus-within:border-veta transition-colors">
+                      <span className="text-[16px] md:text-[17px] text-[var(--text-muted)]">+52</span>
                       <input
-                        className="w-full bg-transparent py-2 text-[15px] text-[var(--text-primary)] outline-none"
+                        className="w-full bg-transparent py-2 text-[16px] md:text-[17px] text-[var(--text-primary)] outline-none"
                         value={form.phone}
                         onChange={(e) => upd("phone", e.target.value)}
                         inputMode="tel"
@@ -450,10 +510,24 @@ export function CitaFlow() {
                       ))}
                     </select>
                   </Field>
+                  <Field label={t.form.source} span2>
+                    <select
+                      className={inputCls}
+                      value={form.source}
+                      onChange={(e) => upd("source", e.target.value)}
+                    >
+                      <option value="">{t.form.placeholderSource}</option>
+                      {t.form.sourceOptions.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
                 </div>
 
                 {/* consent checkbox (LFPDPPP) */}
-                <label className="mt-6 flex items-start gap-3 cursor-pointer select-none">
+                <label className="flex items-start gap-3 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={consent}
@@ -487,76 +561,58 @@ export function CitaFlow() {
                 </label>
 
                 {formError && (
-                  <p className="mt-4 text-[13px]" style={{ color: "#FCA5A5" }}>
+                  <p className="text-[13px]" style={{ color: "#FCA5A5" }}>
                     {t.form.error}
                   </p>
                 )}
                 {apiError && (
-                  <p className="mt-4 text-[13px]" style={{ color: "#FCA5A5" }}>
+                  <p className="text-[13px]" style={{ color: "#FCA5A5" }}>
                     {t.form.apiError}
                   </p>
                 )}
 
-                <button
-                  type="submit"
-                  disabled={!consent || submitting}
-                  className={[
-                    "mt-6 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
-                    "text-[15px] font-medium tracking-wide",
-                    "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
-                    "transition-all duration-200",
-                    consent && !submitting
-                      ? "active:scale-[0.96] hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
-                      : "opacity-40 cursor-not-allowed",
-                  ].join(" ")}
-                >
-                  {submitting ? t.form.submitting : t.form.submit}
-                  <ArrowRight size={16} />
-                </button>
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="submit"
+                    disabled={!consent || submitting}
+                    className={[
+                      "w-full md:w-auto md:self-start inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
+                      "text-[15px] font-medium tracking-wide",
+                      "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
+                      "transition-all duration-200",
+                      consent && !submitting
+                        ? "active:scale-[0.96] hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                        : "opacity-40 cursor-not-allowed",
+                    ].join(" ")}
+                  >
+                    {submitting ? t.form.submitting : t.form.submit}
+                    {submitting ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <ArrowUpRight size={16} />
+                    )}
+                  </button>
 
-                <p className="mt-3 text-[12px] text-[var(--text-muted)]">
-                  {t.form.consentNote}
-                </p>
+                  <p className="text-[12px] text-[var(--text-muted)]">{t.form.consentNote}</p>
+                </div>
               </form>
             ) : (
               /* confirmation */
-              <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 md:p-10">
+              <div className="flex flex-col gap-4">
                 <span
                   className="grid h-14 w-14 place-items-center rounded-full"
                   style={{ background: "rgba(34,197,94,0.1)" }}
                 >
                   <Check size={26} color="#4ADE80" strokeWidth={2.5} />
                 </span>
-                <h2 className="mt-6 font-franchise text-[36px] md:text-[48px] leading-[0.95] text-[var(--text-primary)]">
+                <h2 className="font-franchise text-[36px] md:text-[48px] leading-[0.95] text-[var(--text-primary)]">
                   {t.confirm.title[0]} {t.confirm.title[1]}
                 </h2>
-                <p className="mt-3 max-w-[460px] text-[15px] text-[var(--text-secondary)]">
+                <p className="max-w-[460px] text-[15px] text-[var(--text-secondary)]">
                   {t.confirm.body}
                 </p>
 
-                {/* folio block */}
-                <div
-                  className="mt-6 rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--bg-elevated)] p-5 flex flex-wrap items-center justify-between gap-3"
-                >
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                      {t.confirm.folioLabel}
-                    </p>
-                    <p className="font-franchise text-[28px] leading-none text-[var(--text-primary)] mt-1">
-                      {newFolio}
-                    </p>
-                  </div>
-                  <StatusBadge status="scheduled" label={t.status.scheduled} />
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={viewNewQuote}
-                    className="inline-flex items-center gap-2 rounded-[10px] bg-[var(--invert-bg)] text-[var(--invert-fg)] px-5 py-3 text-[14px] font-medium transition-transform active:scale-[0.96]"
-                  >
-                    {t.confirm.viewQuote} <ArrowRight size={15} />
-                  </button>
+                <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
                     onClick={resetForm}
@@ -567,24 +623,7 @@ export function CitaFlow() {
                 </div>
               </div>
             )}
-
-            {/* right: what to expect */}
-            <aside className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-6 md:p-8">
-              <h3 className="text-[11px] uppercase tracking-[0.14em] text-veta">{t.expect.title}</h3>
-              <ol className="mt-5 space-y-5">
-                {t.expect.steps.map((s, i) => (
-                  <li key={i} className="flex gap-4">
-                    <span className="font-franchise text-[20px] leading-none text-veta-dark">
-                      0{i + 1}
-                    </span>
-                    <p className="text-[14px] leading-relaxed text-[var(--text-secondary)]">{s}</p>
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-6 border-t border-[var(--border-default)] pt-4 text-[13px] text-[var(--text-muted)]">
-                {t.expect.note}
-              </p>
-            </aside>
+            </div>
           </div>
         )}
 

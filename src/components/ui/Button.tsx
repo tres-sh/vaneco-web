@@ -7,11 +7,13 @@ export function PrimaryBtn({
   children,
   full = false,
   icon = true,
+  className = "",
 }: {
   href: string;
   children: ReactNode;
   full?: boolean;
   icon?: boolean;
+  className?: string;
 }) {
   return (
     <a
@@ -23,6 +25,7 @@ export function PrimaryBtn({
         "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
         "transition-all duration-200 active:scale-[0.96]",
         "hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]",
+        className,
       ].join(" ")}
     >
       {children}
