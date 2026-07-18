@@ -1,8 +1,3 @@
-// =====================
-// API client — reads projects from the leads backend (portfolio module).
-// All calls run server-side at build (SSG), so CORS doesn't apply. On any
-// failure we fall back to an empty list so the build never breaks.
-// =====================
 import type { Proyecto } from "../data/projects";
 
 const BASE_URL =
@@ -10,7 +5,6 @@ const BASE_URL =
   import.meta.env.VITE_API_URL ||
   "https://api.pvane.co";
 
-// Shape returned by GET /portfolio/projects (mirrors the Prisma model).
 interface ApiImage {
   id: string;
   url: string;
@@ -63,7 +57,6 @@ const CATEGORY_LABEL: Record<string, string> = {
   BREAKDOWN: "Despiece",
 };
 
-/** Map the backend project onto the shape the gallery/detail UI expects. */
 function mapProject(p: ApiProject): Proyecto {
   const material = p.material ? MATERIAL_LABEL[p.material] : "";
   const images = p.images
@@ -97,27 +90,48 @@ async function get<T>(path: string): Promise<T | null> {
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
-    // Backend unreachable (e.g. Vercel build with API down) — fall back.
     return null;
   }
 }
 
-/** Published projects for the public gallery. Empty array on any failure. */
 export async function getPublishedProjects(): Promise<Proyecto[]> {
   const data = await get<ApiProject[]>("/portfolio/projects");
   if (!data) return [];
   return data.filter((p) => p.published).map(mapProject);
 }
 
-/** Featured projects for the landing teaser carousel. Empty array on failure. */
 export async function getFeaturedProjects(): Promise<Proyecto[]> {
   const data = await get<ApiProject[]>("/portfolio/projects/featured");
   if (!data) return [];
   return data.map(mapProject);
 }
 
-/** Single project by id (used by getStaticPaths / detail). */
 export async function getProjectById(id: string): Promise<Proyecto | null> {
   const p = await get<ApiProject>(`/portfolio/projects/${id}`);
   return p ? mapProject(p) : null;
+}
+
+export interface CitaLeadInput {
+  name: string;
+  phone: string;
+  email: string;
+  workType: string;
+  address: string;
+  date: string;
+  time: string;
+}
+
+export interface CitaLeadResult {
+  id: string;
+  folio: string;
+}
+
+export async function createCitaLead(input: CitaLeadInput): Promise<CitaLeadResult> {
+  const res = await fetch(`${BASE_URL}/leads/web`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) throw new Error("No se pudo agendar la cita");
+  return (await res.json()) as CitaLeadResult;
 }

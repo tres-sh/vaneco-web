@@ -2,6 +2,7 @@ import { useState, type ReactNode } from "react";
 import { Check, ArrowRight, Copy, MessageCircle } from "lucide-react";
 import { useLang } from "../../lib/useLang";
 import { PrimaryBtn } from "../ui/Button";
+import { createCitaLead } from "../../lib/api";
 
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 type Tab = "schedule" | "lookup";
@@ -64,7 +65,9 @@ const copy = {
       time: "Horario",
       timeOptions: ["Mañana", "Tarde"],
       submit: "Agendar y generar folio",
+      submitting: "Agendando…",
       error: "Completa todos los campos para continuar.",
+      apiError: "No pudimos agendar tu cita. Intenta de nuevo o escríbenos por WhatsApp.",
       placeholderType: "Selecciona…",
       consentPre: "He leído y acepto el ",
       consentLink: "Aviso de Privacidad",
@@ -136,7 +139,9 @@ const copy = {
       time: "Time",
       timeOptions: ["Morning", "Afternoon"],
       submit: "Book and generate folio",
+      submitting: "Booking…",
       error: "Fill in every field to continue.",
+      apiError: "We couldn't book your visit. Please try again or message us on WhatsApp.",
       placeholderType: "Select…",
       consentPre: "I have read and accept the ",
       consentLink: "Privacy Notice",
@@ -253,6 +258,8 @@ export function CitaFlow() {
   const empty = { name: "", phone: "", email: "", type: "", address: "", date: "", time: "" };
   const [form, setForm] = useState(empty);
   const [formError, setFormError] = useState(false);
+  const [apiError, setApiError] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [folioCreated, setFolioCreated] = useState(false);
   const [newFolio, setNewFolio] = useState("");
@@ -265,7 +272,7 @@ export function CitaFlow() {
 
   const upd = (k: keyof typeof empty, v: string) => setForm((p) => ({ ...p, [k]: v }));
 
-  function submitForm(e: React.FormEvent) {
+  async function submitForm(e: React.FormEvent) {
     e.preventDefault();
     const complete = Object.values(form).every((v) => v.trim() !== "");
     if (!complete || !consent) {
@@ -273,9 +280,25 @@ export function CitaFlow() {
       return;
     }
     setFormError(false);
-    const folio = `COT-VNC-${Math.floor(1000 + Math.random() * 9000)}`;
-    setNewFolio(folio);
-    setFolioCreated(true);
+    setApiError(false);
+    setSubmitting(true);
+    try {
+      const lead = await createCitaLead({
+        name: form.name,
+        phone: `+52${form.phone}`,
+        email: form.email,
+        workType: form.type,
+        address: form.address,
+        date: form.date,
+        time: form.time,
+      });
+      setNewFolio(lead.folio);
+      setFolioCreated(true);
+    } catch {
+      setApiError(true);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function resetForm() {
@@ -284,6 +307,7 @@ export function CitaFlow() {
     setFolioCreated(false);
     setNewFolio("");
     setFormError(false);
+    setApiError(false);
   }
 
   function viewNewQuote() {
@@ -467,21 +491,26 @@ export function CitaFlow() {
                     {t.form.error}
                   </p>
                 )}
+                {apiError && (
+                  <p className="mt-4 text-[13px]" style={{ color: "#FCA5A5" }}>
+                    {t.form.apiError}
+                  </p>
+                )}
 
                 <button
                   type="submit"
-                  disabled={!consent}
+                  disabled={!consent || submitting}
                   className={[
                     "mt-6 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-[10px]",
                     "text-[15px] font-medium tracking-wide",
                     "border border-transparent bg-[var(--invert-bg)] text-[var(--invert-fg)]",
                     "transition-all duration-200",
-                    consent
+                    consent && !submitting
                       ? "active:scale-[0.96] hover:bg-transparent hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
                       : "opacity-40 cursor-not-allowed",
                   ].join(" ")}
                 >
-                  {t.form.submit}
+                  {submitting ? t.form.submitting : t.form.submit}
                   <ArrowRight size={16} />
                 </button>
 
