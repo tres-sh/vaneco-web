@@ -27,7 +27,7 @@ const copy = {
       heading: ["PROYECTOS", "RECIENTES"],
       body: "Cocinas, islas, barras y baños en piedra natural.",
       cta: "Ver galería completa",
-      url: "vaneco.com/proyectos",
+      url: "piedrasvaneco.com/proyectos",
       items: [
         { name: "Cocina Chapultepec", material: "Granito" },
         { name: "Isla Hipódromo", material: "Cuarzo" },
@@ -71,7 +71,7 @@ const copy = {
       sub: "Sin costo y sin compromiso. Llevamos muestras. Al agendar se crea tu folio.",
       cta: "Agendar visita",
       note: "La consulta de cotización por folio vive en ",
-      noteUrl: "vaneco.com/cita",
+      noteUrl: "piedrasvaneco.com/cita",
     },
     footer: {
       tagline: "Cubiertas de piedra natural · Tijuana, B.C.",
@@ -96,7 +96,7 @@ const copy = {
       heading: ["RECENT", "PROJECTS"],
       body: "Kitchens, islands, bars and baths in natural stone.",
       cta: "See full gallery",
-      url: "vaneco.com/projects",
+      url: "piedrasvaneco.com/projects",
       items: [
         { name: "Chapultepec Kitchen", material: "Granite" },
         { name: "Hipódromo Island", material: "Quartz" },
@@ -140,7 +140,7 @@ const copy = {
       sub: "Free and with no commitment. We bring samples. Booking creates your folio.",
       cta: "Book a visit",
       note: "Quote lookup by folio lives at ",
-      noteUrl: "vaneco.com/cita",
+      noteUrl: "piedrasvaneco.com/cita",
     },
     footer: {
       tagline: "Natural stone countertops · Tijuana, B.C.",

@@ -50,7 +50,7 @@ export const faqGroups: FaqGroup[] = [
       },
       {
         q: "¿Puedo ver los materiales antes de decidir?",
-        a: "Sí. Llevamos muestras físicas a tu visita y puedes conocer nuestra guía de materiales en vaneco.com/materiales. Algunas obras están abiertas al público para verlas instaladas.",
+        a: "Sí. Llevamos muestras físicas a tu visita y puedes conocer nuestra guía de materiales en piedrasvaneco.com/materiales. Algunas obras están abiertas al público para verlas instaladas.",
       },
     ],
   },
