@@ -17,8 +17,6 @@ const t = {
       home: "Inicio",
       projects: "Proyectos",
       materials: "Materiales",
-      about: "Nosotros",
-      faq: "FAQ",
     },
     cta: "Agendar visita",
   },

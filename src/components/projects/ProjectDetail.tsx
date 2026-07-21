@@ -2,6 +2,7 @@ import { ArrowLeft, MapPin, AtSign, ExternalLink } from "lucide-react";
 import { useLang } from "../../lib/useLang";
 import { StonePlaceholder } from "../home/StonePlaceholder";
 import { PrimaryBtn } from "../ui/Button";
+import { stripAccents } from "../../lib/text";
 import type { Proyecto } from "../../data/projects";
 
 const SHELL = "mx-auto w-full max-w-[1120px] px-5 md:px-8";
@@ -19,7 +20,7 @@ const ui = {
     cta: "Quiero algo así",
     publicTitle: "Obra abierta al público",
     maps: "Cómo llegar",
-    more: "MÁS IMÁGENES",
+    more: "MAS IMAGENES",
   },
   en: {
     back: "Back to gallery",
@@ -103,7 +104,7 @@ export function ProjectDetail({ project: p }: { project: Proyecto }) {
           {/* left */}
           <div>
             <h1 className="font-franchise text-[40px] md:text-[56px] leading-[0.95] text-[var(--text-primary)]">
-              {p.title}
+              {stripAccents(p.title)}
             </h1>
             <div className="mt-5 space-y-4 text-[16px] font-light leading-[1.7] text-[var(--text-secondary)]">
               <p>{p.description}</p>

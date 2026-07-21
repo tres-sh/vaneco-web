@@ -1,7 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Check, ArrowRight, ArrowUpRight, Copy, MessageCircle, Loader2 } from "lucide-react";
 import { useLang } from "../../lib/useLang";
-import { PrimaryBtn } from "../ui/Button";
 import { createCitaLead } from "../../lib/api";
 
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
@@ -66,19 +65,16 @@ const copy = {
       name: "Nombre completo",
       phone: "Teléfono",
       email: "Correo",
-      type: "Tipo de trabajo",
-      typeOptions: ["Cocina", "Isla", "Barra", "Baño", "Comercial", "Otro"],
-      address: "Domicilio para la visita",
+      city: "Ciudad",
+      cityOptions: ["Tijuana", "Rosarito", "Tecate", "Ensenada"],
       date: "Fecha preferida",
-      time: "Horario",
-      timeOptions: ["Mañana", "Tarde"],
       source: "¿Cómo nos encontraste? (opcional)",
       sourceOptions: ["Google", "Facebook", "Instagram", "Recomendación", "Otro"],
       submit: "Agendar visita",
       submitting: "Agendando…",
       error: "Completa todos los campos para continuar.",
       apiError: "No pudimos agendar tu cita. Intenta de nuevo o escríbenos por WhatsApp.",
-      placeholderType: "Selecciona…",
+      placeholderCity: "Selecciona…",
       placeholderSource: "Selecciona (opcional)",
       consentPre: "He leído y acepto el ",
       consentLink: "Aviso de Privacidad",
@@ -102,7 +98,7 @@ const copy = {
       note: "¿Ya tienes folio? Consúltalo en la pestaña de arriba.",
     },
     lookup: {
-      title: ["CONSULTA TU", "COTIZACIÓN"],
+      title: ["CONSULTA TU", "COTIZACION"],
       sub: "Ingresa el folio que te dimos al agendar para ver el detalle y pagar.",
       label: "Folio",
       placeholder: "COT-…",
@@ -143,19 +139,16 @@ const copy = {
       name: "Full name",
       phone: "Phone",
       email: "Email",
-      type: "Type of work",
-      typeOptions: ["Kitchen", "Island", "Bar", "Bath", "Commercial", "Other"],
-      address: "Visit address",
+      city: "City",
+      cityOptions: ["Tijuana", "Rosarito", "Tecate", "Ensenada"],
       date: "Preferred date",
-      time: "Time",
-      timeOptions: ["Morning", "Afternoon"],
       source: "How did you find us? (optional)",
       sourceOptions: ["Google", "Facebook", "Instagram", "Referral", "Other"],
       submit: "Book visit",
       submitting: "Booking…",
       error: "Fill in every field to continue.",
       apiError: "We couldn't book your visit. Please try again or message us on WhatsApp.",
-      placeholderType: "Select…",
+      placeholderCity: "Select…",
       placeholderSource: "Select (optional)",
       consentPre: "I have read and accept the ",
       consentLink: "Privacy Notice",
@@ -271,13 +264,11 @@ export function CitaFlow() {
     name: "",
     phone: "",
     email: "",
-    type: "",
-    address: "",
+    city: "",
     date: "",
-    time: "",
     source: "",
   };
-  const REQUIRED_FIELDS = ["name", "phone", "email", "type", "address", "date", "time"] as const;
+  const REQUIRED_FIELDS = ["name", "phone", "email", "city", "date"] as const;
   const [form, setForm] = useState(empty);
   const [formError, setFormError] = useState(false);
   const [apiError, setApiError] = useState(false);
@@ -308,10 +299,8 @@ export function CitaFlow() {
         name: form.name,
         phone: `+52${form.phone}`,
         email: form.email,
-        workType: form.type,
-        address: form.address,
+        city: form.city,
         date: form.date,
-        time: form.time,
         referralSource: form.source || undefined,
       });
       setSubmitted(true);
@@ -378,52 +367,64 @@ export function CitaFlow() {
 
         {/* ===== SCHEDULE TAB ===== */}
         {tab === "schedule" && (
-          <div className="rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-base)] overflow-hidden grid grid-cols-1 md:grid-cols-[0.92fr_1.08fr]">
+          <div className="grid grid-cols-1 md:grid-cols-[0.92fr_1.08fr] gap-8 md:gap-0">
             {/* left: photo panel — badge, gradient title, steps. Static regardless of form state.
                 Explicit height (not min-height) so the absolutely-positioned photo/gradient
-                resolve their percentage sizing reliably instead of against an auto-grown box. */}
-            <div className="relative h-[560px] md:h-[660px] bg-[#0A0A0A]">
-              <img
-                src="/images/cocina-cuarzo.jpg"
-                alt={t.form.photoAlt}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-              <div
-                className="absolute inset-0"
-                style={{
-                  background:
-                    "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.05) 30%, rgba(10,10,10,0.45) 50%, rgba(10,10,10,0.9) 66%, #0A0A0A 82%)",
-                }}
-              />
-              <div className="absolute top-7 left-7 inline-flex items-center gap-2 rounded-full bg-[rgba(10,10,10,0.5)] backdrop-blur-[6px] px-3.5 py-2 text-[12px] uppercase tracking-wide text-white">
-                <span className="h-1.5 w-1.5 rounded-full bg-veta" />
-                {t.form.badge}
-              </div>
-
-              <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-4 md:gap-[22px] px-6 pb-6 md:px-9 md:pb-[34px]">
-                <h1
-                  className="font-franchise uppercase leading-[0.88] text-[40px] md:text-[66px]"
+                resolve their percentage sizing reliably instead of against an auto-grown box.
+                The "border" is a 1px gradient ring (padding + gradient background behind a
+                solid inner box) that fades to transparent by mid-height, so the frame reads
+                on the top edge/corners but dissolves into the black page toward the bottom —
+                a real CSS border can't do a gradient stroke on its own. */}
+            <div
+              className="rounded-[24px] p-px"
+              style={{
+                background:
+                  "linear-gradient(180deg, rgba(245,245,245,0.22) 0%, rgba(245,245,245,0.06) 35%, rgba(245,245,245,0) 60%)",
+              }}
+            >
+              <div className="relative rounded-[24px] overflow-hidden h-[560px] md:h-[660px] bg-[#0A0A0A]">
+                <img
+                  src="/images/cocina-cuarzo.jpg"
+                  alt={t.form.photoAlt}
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div
+                  className="absolute inset-0"
                   style={{
-                    backgroundImage: "linear-gradient(180deg,#FFFFFF 0%,#DCE3E7 42%,#9BA8B0 100%)",
-                    WebkitBackgroundClip: "text",
-                    backgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background:
+                      "linear-gradient(180deg, rgba(10,10,10,0) 0%, rgba(10,10,10,0.05) 30%, rgba(10,10,10,0.45) 50%, rgba(10,10,10,0.9) 66%, #0A0A0A 82%)",
                   }}
-                >
-                  {t.form.title[0]}
-                  <br />
-                  {t.form.title[1]}
-                </h1>
-                <div className="flex flex-col gap-2.5">
-                  {t.expect.steps.map((s, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-3 rounded-xl border border-white/12 bg-[rgba(31,31,31,0.6)] backdrop-blur-[8px] px-4 py-3.5"
-                    >
-                      <span className="font-franchise text-[18px] leading-none text-veta">0{i + 1}</span>
-                      <p className="text-[14px] font-light text-white">{s}</p>
-                    </div>
-                  ))}
+                />
+                <div className="absolute top-7 left-7 inline-flex items-center gap-2 rounded-full bg-[rgba(10,10,10,0.5)] backdrop-blur-[6px] px-3.5 py-2 text-[12px] uppercase tracking-wide text-white">
+                  <span className="h-1.5 w-1.5 rounded-full bg-veta" />
+                  {t.form.badge}
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 flex flex-col gap-4 md:gap-[22px] px-6 pb-6 md:px-9 md:pb-[34px]">
+                  <h1
+                    className="font-franchise uppercase leading-[0.88] text-[40px] md:text-[66px]"
+                    style={{
+                      backgroundImage: "linear-gradient(180deg,#FFFFFF 0%,#DCE3E7 42%,#9BA8B0 100%)",
+                      WebkitBackgroundClip: "text",
+                      backgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}
+                  >
+                    {t.form.title[0]}
+                    <br />
+                    {t.form.title[1]}
+                  </h1>
+                  <div className="flex flex-col gap-2.5">
+                    {t.expect.steps.map((s, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-3 rounded-xl border border-white/12 bg-[rgba(31,31,31,0.6)] backdrop-blur-[8px] px-4 py-3.5"
+                      >
+                        <span className="font-franchise text-[18px] leading-none text-veta">0{i + 1}</span>
+                        <p className="text-[14px] font-light text-white">{s}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>
@@ -463,52 +464,29 @@ export function CitaFlow() {
                       onChange={(e) => upd("email", e.target.value)}
                     />
                   </Field>
-                  <Field label={t.form.type}>
+                  <Field label={t.form.city}>
                     <select
                       className={inputCls}
-                      value={form.type}
-                      onChange={(e) => upd("type", e.target.value)}
+                      value={form.city}
+                      onChange={(e) => upd("city", e.target.value)}
                     >
                       <option value="" disabled>
-                        {t.form.placeholderType}
+                        {t.form.placeholderCity}
                       </option>
-                      {t.form.typeOptions.map((o) => (
+                      {t.form.cityOptions.map((o) => (
                         <option key={o} value={o}>
                           {o}
                         </option>
                       ))}
                     </select>
                   </Field>
-                  <Field label={t.form.address} span2>
-                    <input
-                      className={inputCls}
-                      value={form.address}
-                      onChange={(e) => upd("address", e.target.value)}
-                    />
-                  </Field>
-                  <Field label={t.form.date}>
+                  <Field label={t.form.date} span2>
                     <input
                       className={inputCls}
                       type="date"
                       value={form.date}
                       onChange={(e) => upd("date", e.target.value)}
                     />
-                  </Field>
-                  <Field label={t.form.time}>
-                    <select
-                      className={inputCls}
-                      value={form.time}
-                      onChange={(e) => upd("time", e.target.value)}
-                    >
-                      <option value="" disabled>
-                        {t.form.placeholderType}
-                      </option>
-                      {t.form.timeOptions.map((o) => (
-                        <option key={o} value={o}>
-                          {o}
-                        </option>
-                      ))}
-                    </select>
                   </Field>
                   <Field label={t.form.source} span2>
                     <select

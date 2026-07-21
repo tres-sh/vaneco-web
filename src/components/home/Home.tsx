@@ -16,7 +16,7 @@ const copy = {
       lead: "Diseñamos, fabricamos e instalamos cubiertas de piedra natural. De la visita a la instalación, sin intermediarios.",
       cta: "Agendar visita",
       secondary: "Ver proyectos",
-      chips: ["Blanco Dallas", "Granito"],
+      chips: ["Taj Mahal", "Cuarcita"],
     },
     stats: [
       { n: "10", label: "Años de taller" },
@@ -34,7 +34,7 @@ const copy = {
       ],
     },
     process: {
-      heading: "CÓMO LO HACEMOS",
+      heading: "COMO LO HACEMOS",
       steps: [
         {
           n: "01",
@@ -85,7 +85,7 @@ const copy = {
       lead: "We design, fabricate and install natural stone countertops. From the visit to the install, no middlemen.",
       cta: "Book a visit",
       secondary: "See projects",
-      chips: ["Blanco Dallas", "Granite"],
+      chips: ["Taj Mahal", "Quartzite"],
     },
     stats: [
       { n: "10", label: "Years in the shop" },
@@ -177,7 +177,7 @@ export function Home({ featured = [] }: { featured?: Proyecto[] }) {
               {c.hero.title[1]}
             </h1>
 
-            <p className="mt-6 max-w-[440px] text-[15px] md:text-[18px] font-light leading-relaxed text-[var(--text-secondary)]">
+            <p className="mt-6 max-w-[440px] text-[15px] md:text-[18px] font-normal leading-relaxed text-[var(--text-primary)]/80">
               {c.hero.lead}
             </p>
 
@@ -193,11 +193,13 @@ export function Home({ featured = [] }: { featured?: Proyecto[] }) {
 
           {/* right — main photo */}
           <div className="order-2">
-            <StonePlaceholder
-              className="h-[300px] md:h-[560px] rounded-2xl"
-              label="BLANCO DALLAS"
-              material="granito"
-            >
+            <div className="relative h-[300px] md:h-[560px] rounded-2xl overflow-hidden ring-1 ring-inset ring-white/5">
+              <img
+                src="/images/taj-mahal.jpg"
+                alt="Cubierta de cuarcita Taj Mahal instalada por Vaneco"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
               <div className="absolute top-4 left-4 z-10 flex gap-2">
                 {c.hero.chips.map((chip) => (
                   <span
@@ -209,7 +211,7 @@ export function Home({ featured = [] }: { featured?: Proyecto[] }) {
                   </span>
                 ))}
               </div>
-            </StonePlaceholder>
+            </div>
           </div>
         </div>
       </section>

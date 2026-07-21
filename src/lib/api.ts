@@ -115,10 +115,8 @@ export interface CitaLeadInput {
   name: string;
   phone: string;
   email: string;
-  workType: string;
-  address: string;
+  city: string;
   date: string;
-  time: string;
   referralSource?: string;
 }
 

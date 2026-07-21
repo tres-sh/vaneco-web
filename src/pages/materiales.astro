@@ -6,6 +6,7 @@ import { Footer } from "../components/ui/Footer";
 import { PrimaryBtn } from "../components/ui/Button";
 import { StonePlaceholder } from "../components/home/StonePlaceholder";
 import { materials, specRows } from "../data/materials";
+import { stripAccents } from "../lib/text";
 
 const SHELL = "mx-auto w-full max-w-[1440px] px-5 md:px-20";
 
@@ -85,7 +86,7 @@ const itemList = {
               </div>
 
               <h2 class="mt-3 font-franchise text-[40px] md:text-[56px] leading-[0.95] text-[var(--text-primary)]">
-                {m.name.toUpperCase()}
+                {stripAccents(m.name.toUpperCase())}
               </h2>
 
               <p class="mt-4 max-w-[560px] text-[16px] font-light leading-[1.7] text-[var(--text-secondary)]">
@@ -129,7 +130,7 @@ const itemList = {
     <section class={`${SHELL} py-14 md:py-20`}>
       <div class="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] px-6 py-12 md:px-8 md:py-20 text-center">
         <h2 class="font-franchise text-[36px] md:text-[72px] leading-[0.95] text-[var(--text-primary)]">
-          ¿NO SABES CUÁL ELEGIR?
+          ¿NO SABES CUAL ELEGIR?
         </h2>
         <p class="mx-auto mt-4 max-w-[520px] text-[15px] md:text-[16px] text-[var(--text-secondary)]">
           Agenda una visita gratis: llevamos muestras físicas a tu domicilio y
