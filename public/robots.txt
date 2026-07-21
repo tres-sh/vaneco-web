@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://piedrasvaneco.com/sitemap-index.xml
