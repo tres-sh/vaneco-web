@@ -25,8 +25,6 @@ const t = {
       home: "Home",
       projects: "Projects",
       materials: "Materials",
-      about: "About",
-      faq: "FAQ",
     },
     cta: "Book a visit",
   },
@@ -36,8 +34,6 @@ const navLinks = [
   { key: "home", href: "/" },
   { key: "projects", href: "/proyectos" },
   { key: "materials", href: "/materiales" },
-  { key: "about", href: "/nosotros" },
-  { key: "faq", href: "/faq" },
 ] as const;
 
 // =====================
