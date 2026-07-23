@@ -70,6 +70,8 @@ const copy = {
       date: "Fecha preferida",
       source: "¿Cómo nos encontraste? (opcional)",
       sourceOptions: ["Google", "Facebook", "Instagram", "Recomendación", "Otro"],
+      notes: "Comentarios (opcional)",
+      notesPlaceholder: "Cuéntanos algo más sobre tu proyecto…",
       submit: "Agendar visita",
       submitting: "Agendando…",
       error: "Completa todos los campos para continuar.",
@@ -144,6 +146,8 @@ const copy = {
       date: "Preferred date",
       source: "How did you find us? (optional)",
       sourceOptions: ["Google", "Facebook", "Instagram", "Referral", "Other"],
+      notes: "Comments (optional)",
+      notesPlaceholder: "Tell us more about your project…",
       submit: "Book visit",
       submitting: "Booking…",
       error: "Fill in every field to continue.",
@@ -267,6 +271,7 @@ export function CitaFlow() {
     city: "",
     date: "",
     source: "",
+    notes: "",
   };
   const REQUIRED_FIELDS = ["name", "phone", "email", "city", "date"] as const;
   const [form, setForm] = useState(empty);
@@ -302,6 +307,7 @@ export function CitaFlow() {
         city: form.city,
         date: form.date,
         referralSource: form.source || undefined,
+        notes: form.notes || undefined,
       });
       setSubmitted(true);
     } catch {
@@ -501,6 +507,15 @@ export function CitaFlow() {
                         </option>
                       ))}
                     </select>
+                  </Field>
+                  <Field label={t.form.notes} span2>
+                    <textarea
+                      className={`${inputCls} resize-none`}
+                      rows={3}
+                      placeholder={t.form.notesPlaceholder}
+                      value={form.notes}
+                      onChange={(e) => upd("notes", e.target.value)}
+                    />
                   </Field>
                 </div>
 

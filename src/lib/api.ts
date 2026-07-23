@@ -118,6 +118,7 @@ export interface CitaLeadInput {
   city: string;
   date: string;
   referralSource?: string;
+  notes?: string;
 }
 
 // El folio se genera y se guarda internamente, pero todavía no se expone
