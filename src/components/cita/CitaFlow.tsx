@@ -121,7 +121,7 @@ const copy = {
       copied: "¡Copiado!",
       payNote: "Al pagar, tu folio pasa a En fabricación. Anticipo del 50% para iniciar.",
       whatsTitle: "¿Dudas con tu cotización?",
-      whatsBody: "Escríbenos al (664) 808 1307.",
+      whatsBody: "Escríbenos al (664) 320 2318.",
       client: "Cliente",
     },
     status: {
@@ -197,7 +197,7 @@ const copy = {
       copied: "Copied!",
       payNote: "Once paid, your folio moves to In fabrication. 50% deposit to start.",
       whatsTitle: "Questions about your quote?",
-      whatsBody: "Message us at (664) 808 1307.",
+      whatsBody: "Message us at (664) 320 2318.",
       client: "Client",
     },
     status: {
@@ -796,7 +796,7 @@ function QuoteDetail({
 
         {/* whatsapp */}
         <a
-          href="https://wa.me/526648081307"
+          href="https://wa.me/526643202318"
           target="_blank"
           rel="noopener noreferrer"
           className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-surface)] p-5 flex items-start gap-3 hover:border-[var(--border-strong)] transition-colors"

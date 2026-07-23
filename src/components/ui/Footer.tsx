@@ -38,7 +38,7 @@ const copy = {
 
 const SOCIAL = [
   { label: "Instagram", href: "https://instagram.com/piedrasvaneco" },
-  { label: "WhatsApp", href: "https://wa.me/526648081307" },
+  { label: "WhatsApp", href: "https://wa.me/526643202318" },
   { label: "Facebook", href: "https://facebook.com/piedrasvaneco" },
 ];
 
@@ -83,8 +83,8 @@ export function Footer() {
             <span className="text-[10px] md:text-[11px] uppercase tracking-[2px] text-[var(--text-muted)]">
               {t.contact}
             </span>
-            <a href="tel:+526648081307" className={linkCls}>
-              (664) 808 1307
+            <a href="tel:+526643202318" className={linkCls}>
+              (664) 320 2318
             </a>
             <a href="mailto:contacto@piedrasvaneco.com" className={linkCls}>
               contacto@piedrasvaneco.com
